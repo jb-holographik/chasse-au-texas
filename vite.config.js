@@ -1,16 +1,21 @@
 import { defineConfig } from 'vite'
-import eslintPlugin from 'vite-plugin-eslint'
 
 // vite.config.js
 export default defineConfig({
-  plugins: [eslintPlugin({ cache: false })],
   server: {
     host: 'localhost',
+    port: 3000,
+    strictPort: true,
     cors: '*',
     hmr: {
       host: 'localhost',
       protocol: 'ws',
     },
+  },
+  preview: {
+    host: 'localhost',
+    port: 3000,
+    strictPort: true,
   },
   build: {
     minify: true,
@@ -21,7 +26,6 @@ export default defineConfig({
         format: 'umd',
         entryFileNames: 'main.js',
         esModule: false,
-        compact: true,
         globals: {
           jquery: '$',
         },

@@ -1,22 +1,40 @@
-.js-badge {
-  position: fixed;
-  top: 32px;
-  left: 32px;
-  border-radius: 16px;
-  background-color: lightblue;
-  color: black;
-  padding: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  line-height: 1.2;
-  font-size: 14px;
-  cursor: pointer;
-  z-index: 10000;
-  transition: background-color .1s ease-out;
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
 }
 
-.js-badge:hover {
-  background-color: rgb(228, 137, 193);
+#content,
+#canvas {
+  width: 100%;
+  height: 100%;
+}
+
+#bg-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#webgpu-error {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: #111;
+  font-family: sans-serif;
+}
+
+/* Nav submenu override: force the 5th item full width. */
+#nav-submenu .submenu-list > .submenu-item:nth-child(5) {
+  width: 100%;
+  flex-basis: 100%;
+  grid-column: 1 / -1;
+}
+
+#nav-submenu .submenu-list > .submenu-item:nth-child(5) .button-cat {
+  width: 100%;
 }

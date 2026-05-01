@@ -1,0 +1,17 @@
+---
+description: Protect Webflow copy files from accidental edits
+alwaysApply: true
+---
+
+# Fichiers Webflow en lecture seule
+
+Les fichiers suivants sont des copies de Webflow et ne doivent jamais etre modifies par l'agent :
+
+- `index.html`
+- `src/styles/chasse-au-texas.webflow.css`
+
+Regle obligatoire :
+
+- Ne jamais editer, reformater, renommer, deplacer ou supprimer ces fichiers.
+- Si une modification est necessaire, demander explicitement a l'utilisateur de la faire lui-meme.
+- Proposer uniquement les changements a appliquer, sans toucher directement aux fichiers.
