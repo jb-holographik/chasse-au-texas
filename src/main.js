@@ -1,8 +1,12 @@
-import animateTitle from './features/animateTitle'
-import createBadge from './features/createBasge'
 import './styles/style.css'
+import { initBannerStack } from './animations/banner-stack'
+import { initCanvas } from './animations/canvas'
+import { initNavSubmenuToggle } from './animations/nav'
+import { initSmoothScroll } from './utils/scroll'
 
-console.log('Welcome to Vite + JS + Webflow!')
+console.log('Connection established')
 
-createBadge()
-animateTitle()
+initCanvas()
+initBannerStack()
+initNavSubmenuToggle()
+initSmoothScroll()
