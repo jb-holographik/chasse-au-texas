@@ -38,3 +38,65 @@ body {
 #nav-submenu .submenu-list > .submenu-item:nth-child(5) .button-cat {
   width: 100%;
 }
+
+/* Tablet typography bridge between desktop and mobile scales. */
+@media screen and (min-width: 768px) and (max-width: 991px) {
+  h1 {
+    font-size: 3.5em;
+  }
+
+  h2 {
+    font-size: 2.75em;
+  }
+
+  h3 {
+    font-size: 1.75em;
+  }
+
+  h4 {
+    font-size: 1.375em;
+  }
+
+  h5 {
+    font-size: 1.125em;
+  }
+
+  h6 {
+    font-size: 0.9375em;
+  }
+
+  p {
+    font-size: 1em;
+  }
+}
+
+/* Mobile landscape typography bridge between tablet and mobile. */
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  h1 {
+    font-size: 3em;
+  }
+
+  h2 {
+    font-size: 2.375em;
+  }
+
+  h3 {
+    font-size: 1.625em;
+  }
+
+  h4 {
+    font-size: 1.3125em;
+  }
+
+  h5 {
+    font-size: 1.0625em;
+  }
+
+  h6 {
+    font-size: 0.90625em;
+  }
+
+  p {
+    font-size: 1em;
+  }
+}
