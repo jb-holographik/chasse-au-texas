@@ -1,0 +1,68 @@
+# Chasse au Texas
+
+> ChasseAuTexas.com — La première agence spécialisée dans le tourisme outdoor au Texas dédiée aux francophones.
+
+Site officiel : https://www.chasseautexas.com
+Langue : français (fr)
+Staging : https://chasse-au-texas.webflow.io
+
+## À propos
+
+Chasse au Texas propose des séjours sur mesure alliant chasse, pêche, tir sportif et découverte authentique du Far West texan. L'agence conçoit des expériences immersives pour les passionnés de plein air francophones : chasses d'exception sur territoires privés, séances de tir, pêche, rodéos, ranchs reculés et immersion culturelle avec guide 100 % francophone.
+
+## Pages principales
+
+- [Accueil](https://www.chasseautexas.com/) — Présentation des activités et catégories
+- [Qui sommes-nous](https://www.chasseautexas.com/qui-sommes-nous) — L'agence ChasseAuTexas.com
+- [Réservation](https://www.chasseautexas.com/reservation) — Demande de devis et contact
+- [Activités](https://www.chasseautexas.com/activites) — Détail des expériences (pages CMS)
+
+## Catégories
+
+- **Chasse** — Sanglier nocturne, cerf, bison, nilgai, blackbuck, aoudad, alligator, chasse hélicoptère, lunette thermique, etc.
+- **Pêche** — Gar alligator, bass, catfish, pêche à l'arc en aéroglisseur
+- **Tir** — Fusil d'assault, stand privé, expérience premium (tanks, artillerie, armes lourdes)
+- **Tourisme** — Rodéo, découverte du Texas authentique, journées culturelles
+- **Logement** — Formule all inclusive ranch, hôtel, terrasse du logement
+
+## Activités (exemples)
+
+- Formule All Inclusive ranch
+- Hôtel
+- Balade à cheval le long de la Brazos River
+- Journée de découverte du Texas authentique
+- Expérience de tir premium : tanks, artillerie et armes lourdes
+- Expérience de tir sur stand privé au Texas
+- Pêche à l'arc en aéroglisseur au Texas
+- Pêche du Gar Alligator au Texas
+- Pêche du Bass et du Catfish au Texas
+- Chasse du Bison à l'approche au Texas
+- Chasse du Nilgai à l'approche au Texas
+- Chasse du Blackbuck à l'approche au Texas
+- Chasse du cerf axis
+- Chasse à l'aoudad (mouflon à manchette)
+- Chasse du cerf à queue blanche de Virginie (Whitetail)
+- Chasse à l'alligator
+- Chasse du sanglier à l'arbalète
+- Chasse du sanglier en hélicoptère
+- Chasse nocturne à la lunette thermique
+
+## Contact et réservation
+
+- Page de réservation : https://www.chasseautexas.com/reservation
+- Formulaire : nom, email, message
+
+## Réseaux sociaux
+
+- Facebook : https://www.facebook.com/p/Chasse-au-Texas-61553358493936/
+- Instagram : https://www.instagram.com/chasseautexas_com
+
+## Politique
+
+Ce site n'utilise pas de cookies (mention footer).
+
+## Optional
+
+- [Accueil staging](https://chasse-au-texas.webflow.io/)
+- [Audit SEO/a11y/schema](./docs/audit-seo-a11y-schema.md)
+- [Schémas JSON-LD corrigés](./docs/schema-list.md)

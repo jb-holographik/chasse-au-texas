@@ -1,12 +1,22 @@
 import './styles/style.css'
+import { initActivitePhotos } from './animations/activite-photos'
 import { initBannerStack } from './animations/banner-stack'
-import { initCanvas } from './animations/canvas'
+import { initFooterNavHover } from './animations/footer-nav'
 import { initNavSubmenuToggle } from './animations/nav'
+import { initPageTransitions } from './animations/page-transition'
+import { initReservationForm } from './animations/reservation-form'
 import { initSmoothScroll } from './utils/scroll'
 
-console.log('Connection established')
+async function bootstrap() {
+  initNavSubmenuToggle()
+  initFooterNavHover()
+  initSmoothScroll()
 
-initCanvas()
-initBannerStack()
-initNavSubmenuToggle()
-initSmoothScroll()
+  initPageTransitions()
+
+  initBannerStack()
+  initActivitePhotos()
+  initReservationForm()
+}
+
+bootstrap()
