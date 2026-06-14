@@ -1,92 +1,113 @@
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
-let bannerTimeline = null
+import { syncSmoothScroll } from '../utils/scroll'
+
+let bannerScrollTrigger = null
 let bannerNodes = null
-let secondBannerControlRoot = null
 const bannerStackSettings = {
   secondBannerOffsetEm: 2.2,
 }
 
-function removeSecondBannerControl() {
-  if (!secondBannerControlRoot) {
-    return
-  }
+const segmentEase = gsap.parseEase('power2.inOut')
 
-  secondBannerControlRoot.remove()
-  secondBannerControlRoot = null
+function getExitDistance() {
+  return -window.innerHeight * 0.92
 }
 
-function createSecondBannerControl(secondBanner) {
-  removeSecondBannerControl()
+function updateBannerPointerEvents(travel, stepIndex, localT) {
+  if (!bannerNodes) return
 
-  const controlRoot = document.createElement('div')
-  controlRoot.setAttribute('data-banner-control', 'second-banner-offset')
-  controlRoot.style.position = 'fixed'
-  controlRoot.style.left = '1rem'
-  controlRoot.style.bottom = '1rem'
-  controlRoot.style.zIndex = '9999'
-  controlRoot.style.padding = '0.75rem'
-  controlRoot.style.borderRadius = '0.5rem'
-  controlRoot.style.background = 'rgba(10, 10, 10, 0.75)'
-  controlRoot.style.backdropFilter = 'blur(8px)'
-  controlRoot.style.color = '#fff'
-  controlRoot.style.fontSize = '12px'
-  controlRoot.style.fontFamily = 'sans-serif'
-  controlRoot.style.display = 'flex'
-  controlRoot.style.flexDirection = 'column'
-  controlRoot.style.gap = '0.5rem'
+  const { banners, items } = bannerNodes
+  const totalSteps = banners.length - 1
+  const interactiveIndex =
+    totalSteps <= 0
+      ? 0
+      : Math.min(stepIndex + (localT > 0.45 ? 1 : 0), banners.length - 1)
 
-  const label = document.createElement('label')
-  label.textContent = '2e banner Y (em)'
+  banners.forEach((banner, index) => {
+    const pointerEvents = index === interactiveIndex ? 'auto' : 'none'
+    gsap.set(items[index], { pointerEvents })
+    gsap.set(banner, { pointerEvents })
+  })
+}
 
-  const input = document.createElement('input')
-  input.type = 'range'
-  input.min = '-3'
-  input.max = '3'
-  input.step = '0.1'
-  input.value = String(bannerStackSettings.secondBannerOffsetEm)
+function updateBannerStack(progress) {
+  if (!bannerNodes) return
 
-  const valueText = document.createElement('div')
-  valueText.textContent = `${bannerStackSettings.secondBannerOffsetEm.toFixed(
-    1
-  )}em`
+  const { banners } = bannerNodes
+  const totalSteps = banners.length - 1
+  if (totalSteps <= 0) return
 
-  input.addEventListener('input', (event) => {
-    const target = event.target
-    const nextValue = Number(target.value)
-    bannerStackSettings.secondBannerOffsetEm = nextValue
-    valueText.textContent = `${nextValue.toFixed(1)}em`
-    gsap.set(secondBanner, { y: `${nextValue}em` })
+  const travel = gsap.utils.clamp(0, totalSteps, progress * totalSteps)
+  const stepIndex = Math.min(Math.floor(travel), totalSteps - 1)
+  const localT = segmentEase(travel - stepIndex)
+  const offsetEm = bannerStackSettings.secondBannerOffsetEm
+  const exitY = getExitDistance()
+
+  banners.forEach((banner, index) => {
+    if (index < stepIndex) {
+      gsap.set(banner, {
+        y: exitY,
+        opacity: 0.88,
+        scale: 1,
+      })
+      return
+    }
+
+    if (index === stepIndex) {
+      gsap.set(banner, {
+        y: localT * exitY,
+        opacity: 1 - localT * 0.12,
+        scale: 1,
+      })
+      return
+    }
+
+    if (index === stepIndex + 1) {
+      gsap.set(banner, {
+        y: `${(1 - localT) * offsetEm}em`,
+        scale: gsap.utils.interpolate(0.93, 1, localT),
+        opacity: gsap.utils.interpolate(0.96, 1, localT),
+      })
+      return
+    }
+
+    const depth = index - stepIndex - 1
+    gsap.set(banner, {
+      y: `${offsetEm + (depth - 1) * 0.35}em`,
+      scale: Math.max(0.9, 0.93 - (depth - 1) * 0.015),
+      opacity: 0.96,
+    })
   })
 
-  label.appendChild(input)
-  controlRoot.appendChild(label)
-  controlRoot.appendChild(valueText)
-  document.body.appendChild(controlRoot)
-  secondBannerControlRoot = controlRoot
+  updateBannerPointerEvents(travel, stepIndex, localT)
 }
 
-export function initBannerStack() {
-  destroyBannerStack()
-
-  const section = document.querySelector('.section_banners')
+function setupBannerStackNodes(root) {
+  const section = root.querySelector('.section_banners')
   if (!section) {
-    return
+    return null
   }
 
-  const banners = gsap.utils.toArray('.section_banners .banner')
-  const items = gsap.utils.toArray('.section_banners .banners-item')
+  const banners = gsap.utils.toArray(
+    root.querySelectorAll('.section_banners .banner')
+  )
+  const items = gsap.utils.toArray(
+    root.querySelectorAll('.section_banners .banners-item')
+  )
   const wrapper = section.querySelector('.banners-wrapper')
   const list = section.querySelector('.banners-list')
 
   if (!banners.length || !items.length || !wrapper || !list) {
-    return
+    return null
   }
 
-  gsap.registerPlugin(ScrollTrigger)
+  return { section, wrapper, list, items, banners }
+}
 
-  bannerNodes = { section, wrapper, list, items, banners }
+function applyBannerStackLayout(nodes) {
+  const { section, wrapper, list, items, banners } = nodes
 
   gsap.set(section, {
     overflow: 'hidden',
@@ -114,58 +135,83 @@ export function initBannerStack() {
   banners.forEach((banner, index) => {
     gsap.set(items[index], { zIndex: banners.length - index })
     gsap.set(banner, {
-      y: index === 0 ? '0em' : `${bannerStackSettings.secondBannerOffsetEm}em`,
-      scale: index === 0 ? 1 : 0.9,
-      willChange: 'transform',
+      y: index === 0 ? 0 : `${bannerStackSettings.secondBannerOffsetEm}em`,
+      scale: index === 0 ? 1 : 0.93,
+      opacity: 1,
+      willChange: 'transform, opacity',
     })
   })
 
-  if (banners[1]) {
-    createSecondBannerControl(banners[1])
-  }
+  updateBannerStack(0)
+}
 
-  if (banners.length === 1) {
+function mountBannerScrollTrigger() {
+  if (!bannerNodes || bannerScrollTrigger) {
     return
   }
 
-  bannerTimeline = gsap.timeline({
-    defaults: { ease: 'none' },
-    scrollTrigger: {
-      trigger: section,
-      start: 'center center',
-      end: () => `+=${window.innerHeight * banners.length}`,
-      scrub: true,
-      pin: true,
-      invalidateOnRefresh: true,
-      anticipatePin: 1,
+  const { section, banners } = bannerNodes
+  if (banners.length <= 1) {
+    return
+  }
+
+  bannerScrollTrigger = ScrollTrigger.create({
+    trigger: section,
+    start: 'center center',
+    end: () => `+=${(banners.length - 1) * window.innerHeight}`,
+    pin: true,
+    anticipatePin: 0,
+    invalidateOnRefresh: true,
+    onUpdate(self) {
+      updateBannerStack(self.progress)
     },
   })
+}
 
-  // Keep the first banner fully visible at section entry.
-  bannerTimeline.to({}, { duration: 1 })
-
-  for (let index = 0; index < banners.length - 1; index += 1) {
-    bannerTimeline
-      .to(
-        banners[index],
-        { y: () => -window.innerHeight, duration: 1 },
-        index + 1
-      )
-      .to(banners[index + 1], { y: '0em', scale: 1, duration: 1 }, index + 1)
+export function prepareBannerStackLayout(scope = document) {
+  const root = scope?.querySelector ? scope : document
+  const nodes = setupBannerStackNodes(root)
+  if (!nodes) {
+    return
   }
+
+  gsap.registerPlugin(ScrollTrigger)
+  bannerNodes = nodes
+  applyBannerStackLayout(nodes)
+}
+
+export function finalizeBannerStack() {
+  if (!bannerNodes) {
+    return
+  }
+
+  mountBannerScrollTrigger()
+  syncSmoothScroll()
+}
+
+export function initBannerStack(scope = document) {
+  destroyBannerStack()
+
+  const root = scope?.querySelector ? scope : document
+  const nodes = setupBannerStackNodes(root)
+  if (!nodes) {
+    return
+  }
+
+  gsap.registerPlugin(ScrollTrigger)
+  bannerNodes = nodes
+  applyBannerStackLayout(nodes)
+  mountBannerScrollTrigger()
+  syncSmoothScroll()
 }
 
 export function destroyBannerStack() {
-  if (bannerTimeline) {
-    if (bannerTimeline.scrollTrigger) {
-      bannerTimeline.scrollTrigger.kill()
-    }
-    bannerTimeline.kill()
-    bannerTimeline = null
+  if (bannerScrollTrigger) {
+    bannerScrollTrigger.kill()
+    bannerScrollTrigger = null
   }
 
   if (!bannerNodes) {
-    removeSecondBannerControl()
     return
   }
 
@@ -175,10 +221,18 @@ export function destroyBannerStack() {
   gsap.set(list, { clearProps: 'position,width,minHeight' })
   gsap.set(items, {
     clearProps:
-      'position,top,left,width,yPercent,display,alignItems,justifyContent,zIndex',
+      'position,top,left,width,yPercent,display,alignItems,justifyContent,zIndex,pointerEvents',
   })
-  gsap.set(banners, { clearProps: 'yPercent,y,scale,willChange' })
+  gsap.set(banners, {
+    clearProps: 'yPercent,y,scale,opacity,willChange,pointerEvents',
+  })
 
-  removeSecondBannerControl()
+  banners.forEach((banner) => {
+    banner.classList.remove('banner--static')
+    banner.removeAttribute('tabindex')
+    banner.removeAttribute('aria-hidden')
+    banner.removeAttribute('role')
+  })
+
   bannerNodes = null
 }
