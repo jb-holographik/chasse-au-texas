@@ -1,10 +1,14 @@
 import { gsap } from 'gsap'
 
+import { isMobileViewport } from '../utils/viewport'
+
 const PATH_SAMPLE_STEP = 2
 const HOVER_DURATION = 0.4
 const DIM_OPACITY = 0.1
 
 export function initFooterNavHover() {
+  if (isMobileViewport()) return
+
   const footer = document.querySelector('.footer')
   if (!footer || footer.dataset.footerNavHoverBound === '1') return
 

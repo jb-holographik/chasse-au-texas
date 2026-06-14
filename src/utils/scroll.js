@@ -2,10 +2,39 @@ import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 
+import { isMobileViewport, MOBILE_MEDIA_QUERY } from './viewport'
+
 let lenisInstance = null
 let tickerCallback = null
+let viewportListenerBound = false
+
+function bindViewportScrollListener() {
+  if (viewportListenerBound) {
+    return
+  }
+
+  window
+    .matchMedia(MOBILE_MEDIA_QUERY)
+    .addEventListener('change', () => {
+      if (isMobileViewport()) {
+        destroySmoothScroll()
+        return
+      }
+
+      initSmoothScroll()
+    })
+
+  viewportListenerBound = true
+}
 
 export function initSmoothScroll() {
+  bindViewportScrollListener()
+
+  if (isMobileViewport()) {
+    destroySmoothScroll()
+    return null
+  }
+
   if (lenisInstance) {
     return lenisInstance
   }
