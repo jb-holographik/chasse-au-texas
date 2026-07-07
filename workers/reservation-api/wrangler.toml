@@ -1,0 +1,7 @@
+name = "cat-reservation"
+main = "index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+RESERVATION_TO = "misericorde.studio@gmail.com"
+RESEND_FROM = "Chasse au Texas <onboarding@resend.dev>"

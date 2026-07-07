@@ -130,6 +130,11 @@ body {
   margin-top: 0.25rem;
 }
 
+.formulaire-contact .w-form-done,
+.formulaire-contact .w-form-fail {
+  display: none;
+}
+
 #message,
 textarea#message {
   min-height: 8rem;
@@ -141,6 +146,12 @@ textarea#message {
   width: 100%;
   box-sizing: border-box;
   field-sizing: content;
+}
+
+/* Nav top row: equal width for Qui sommes nous and Activités. */
+#nav-top-row .button-cat {
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 /* Nav submenu override: force the 5th item full width. */
@@ -222,3 +233,38 @@ textarea#message {
 }
 
 /* Footer nav-link opacity is animated via GSAP in footer-nav.js. */
+
+/* Mobile: désactiver les styles :hover des boutons (sticky hover tactile). */
+@media screen and (max-width: 767px) {
+  .button-cat:hover {
+    border-color: var(
+      --_semantics---component--button--border--primary-default
+    );
+    background-color: var(
+      --_semantics---component--button--background--primary-resting
+    );
+  }
+
+  .button-cat:hover:where(.w-variant-e9bfd782-ae68-79f0-80d6-e8482c2a9682) {
+    border-color: var(
+      --_semantics---component--button--border--secondary-default
+    );
+    background-color: var(
+      --_semantics---component--button--background--secondary-resting
+    );
+  }
+
+  .button-cat:hover:where(.w-variant-984cbef5-9f52-7cb6-b41b-728a4dc2ca23) {
+    border-color: var(
+      --_semantics---component--button--border--tertiaty-default
+    );
+    background-color: var(
+      --_semantics---component--button--background--tertiary-resting
+    );
+  }
+
+  .button:hover {
+    text-shadow: none;
+    box-shadow: none;
+  }
+}
