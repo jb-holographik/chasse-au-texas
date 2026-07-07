@@ -130,6 +130,11 @@ body {
   margin-top: 0.25rem;
 }
 
+.formulaire-contact .w-form-done,
+.formulaire-contact .w-form-fail {
+  display: none;
+}
+
 #message,
 textarea#message {
   min-height: 8rem;

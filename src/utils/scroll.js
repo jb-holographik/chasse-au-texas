@@ -13,16 +13,14 @@ function bindViewportScrollListener() {
     return
   }
 
-  window
-    .matchMedia(MOBILE_MEDIA_QUERY)
-    .addEventListener('change', () => {
-      if (isMobileViewport()) {
-        destroySmoothScroll()
-        return
-      }
+  window.matchMedia(MOBILE_MEDIA_QUERY).addEventListener('change', () => {
+    if (isMobileViewport()) {
+      destroySmoothScroll()
+      return
+    }
 
-      initSmoothScroll()
-    })
+    initSmoothScroll()
+  })
 
   viewportListenerBound = true
 }
