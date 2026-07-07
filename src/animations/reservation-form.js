@@ -1,8 +1,11 @@
-const RECIPIENT_EMAIL = 'misericorde.studio@gmail.com'
-const FORM_SUBMIT_URL = `https://formsubmit.co/ajax/${RECIPIENT_EMAIL}`
+const RESERVATION_API_URL = import.meta.env.VITE_RESERVATION_API_URL || ''
 
 const EMAIL_PATTERN =
   /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/
+
+const FORM_SUCCESS_MESSAGE = 'Merci, votre message a bien été envoyé !'
+const FORM_ERROR_MESSAGE =
+  "Il y a eu une erreur lors de l'envoi, réessayez ultérieurement."
 
 let formBound = false
 let boundForm = null
@@ -138,38 +141,88 @@ function validateRequiredField(input, emptyMessage) {
   return true
 }
 
+function querySuccessEl(formContainer) {
+  return (
+    formContainer.querySelector('.w-form-done') ||
+    formContainer.querySelector('.form-success')
+  )
+}
+
+function queryErrorEl(formContainer) {
+  return (
+    formContainer.querySelector('.w-form-fail') ||
+    formContainer.querySelector('.form-error')
+  )
+}
+
 function resetFormState(formContainer) {
   if (!formContainer) return
 
   const form = formContainer.querySelector('form')
-  const successEl = formContainer.querySelector('.w-form-done')
-  const errorEl = formContainer.querySelector('.w-form-fail')
+  const successEl = querySuccessEl(formContainer)
+  const errorEl = queryErrorEl(formContainer)
 
   if (form) {
     form.style.display = ''
     form.reset()
   }
 
-  if (successEl) successEl.style.display = 'none'
-  if (errorEl) errorEl.style.display = 'none'
+  if (successEl) {
+    successEl.style.display = 'none'
+    const messageEl = successEl.querySelector('div')
+    if (messageEl) messageEl.textContent = FORM_SUCCESS_MESSAGE
+  }
+  if (errorEl) {
+    errorEl.style.display = 'none'
+    const messageEl = errorEl.querySelector('div')
+    if (messageEl) messageEl.textContent = FORM_ERROR_MESSAGE
+  }
 }
 
-function showFormSuccess(formContainer) {
+function showFormSuccess(formContainer, message) {
   const form = formContainer.querySelector('form')
-  const successEl = formContainer.querySelector('.w-form-done')
-  const errorEl = formContainer.querySelector('.w-form-fail')
+  const successEl = querySuccessEl(formContainer)
+  const errorEl = queryErrorEl(formContainer)
 
   if (form) form.style.display = 'none'
   if (errorEl) errorEl.style.display = 'none'
-  if (successEl) successEl.style.display = 'block'
+  if (successEl) {
+    successEl.style.display = 'block'
+    const messageEl = successEl.querySelector('div')
+    if (messageEl && message) {
+      messageEl.textContent = message
+    }
+  }
 }
 
-function showFormError(formContainer) {
-  const errorEl = formContainer.querySelector('.w-form-fail')
-  const successEl = formContainer.querySelector('.w-form-done')
+function showFormError(formContainer, message) {
+  const errorEl = queryErrorEl(formContainer)
+  const successEl = querySuccessEl(formContainer)
 
   if (successEl) successEl.style.display = 'none'
-  if (errorEl) errorEl.style.display = 'block'
+  if (errorEl) {
+    errorEl.style.display = 'block'
+    const messageEl = errorEl.querySelector('div')
+    if (messageEl && message) {
+      messageEl.textContent = message
+    }
+  }
+}
+
+async function parseApiResponse(response) {
+  const contentType = response.headers.get('content-type') || ''
+
+  if (contentType.includes('application/json')) {
+    return response.json()
+  }
+
+  const text = await response.text()
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return { success: response.ok, message: text }
+  }
 }
 
 function setSubmitButtonState(submitButton, isLoading) {
@@ -210,8 +263,18 @@ async function submitReservationForm(form, formContainer) {
   isSubmitting = true
   setSubmitButtonState(submitButton, true)
 
+  if (!RESERVATION_API_URL) {
+    showFormError(
+      formContainer,
+      "Le service d'envoi n'est pas configuré. Contactez le webmaster."
+    )
+    isSubmitting = false
+    setSubmitButtonState(submitButton, false)
+    return
+  }
+
   try {
-    const response = await fetch(FORM_SUBMIT_URL, {
+    const response = await fetch(RESERVATION_API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -221,19 +284,23 @@ async function submitReservationForm(form, formContainer) {
         name: nameInput.value.trim(),
         email: emailInput.value.trim(),
         message: messageInput.value.trim(),
-        _replyto: emailInput.value.trim(),
-        _subject: 'Nouvelle réservation — Chasse au Texas',
-        _template: 'table',
       }),
     })
 
-    if (!response.ok) {
-      throw new Error('Form submission failed')
+    const result = await parseApiResponse(response)
+
+    if (!response.ok || result.success !== true) {
+      throw new Error(result.message || 'Form submission failed')
     }
 
-    showFormSuccess(formContainer)
-  } catch {
-    showFormError(formContainer)
+    showFormSuccess(formContainer, FORM_SUCCESS_MESSAGE)
+  } catch (error) {
+    const fallbackMessage =
+      error instanceof Error && error.message
+        ? error.message
+        : FORM_ERROR_MESSAGE
+
+    showFormError(formContainer, fallbackMessage)
   } finally {
     isSubmitting = false
     setSubmitButtonState(submitButton, false)
@@ -246,9 +313,12 @@ export function initReservationForm() {
   const form = document.querySelector('#email-form')
   if (!form) return
 
-  const formContainer = form.closest('.w-form')
+  const formContainer =
+    form.closest('.w-form') || form.closest('.formulaire-contact')
   if (!formContainer) return
 
+  form.removeAttribute('action')
+  form.removeAttribute('method')
   form.setAttribute('novalidate', 'novalidate')
   resetFormState(formContainer)
   upgradeMessageField()
@@ -273,6 +343,7 @@ export function initReservationForm() {
   boundSubmitHandler = (event) => {
     event.preventDefault()
     event.stopPropagation()
+    event.stopImmediatePropagation()
 
     if (isSubmitting) return
 
@@ -281,7 +352,7 @@ export function initReservationForm() {
 
   emailInput.addEventListener('blur', boundBlurHandler)
   emailInput.addEventListener('input', boundInputHandler)
-  form.addEventListener('submit', boundSubmitHandler)
+  form.addEventListener('submit', boundSubmitHandler, true)
   formBound = true
 }
 
@@ -297,7 +368,7 @@ export function destroyReservationForm() {
 
   boundEmailInput.removeEventListener('blur', boundBlurHandler)
   boundEmailInput.removeEventListener('input', boundInputHandler)
-  boundForm.removeEventListener('submit', boundSubmitHandler)
+  boundForm.removeEventListener('submit', boundSubmitHandler, true)
 
   clearEmailError(boundEmailInput)
   resetFormState(boundFormContainer)

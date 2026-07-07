@@ -30,6 +30,8 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Build
+        env:
+          VITE_RESERVATION_API_URL: ${{ secrets.VITE_RESERVATION_API_URL }}
         run: yarn build
 
       - name: Publish dist to release branch

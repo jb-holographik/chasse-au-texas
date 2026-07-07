@@ -1,0 +1,62 @@
+<!-- Embed Webflow — page Réservation (reservation-inner)
+     Collez ce HTML dans un bloc Html Embed.
+     Pas de script ici : l'envoi est géré par main.js via Resend. -->
+
+<div id="contact-form" class="formulaire-contact w-form">
+  <form
+    id="email-form"
+    name="email-form"
+    data-name="Email Form"
+    class="formulaire-inner"
+    novalidate
+  >
+    <div class="w-layout-hflex form-block">
+      <label for="name" class="form-label">Votre nom*</label>
+      <input
+        class="form-field w-input"
+        maxlength="256"
+        name="name"
+        data-name="Name"
+        type="text"
+        id="name"
+        required
+      />
+    </div>
+    <div class="w-layout-hflex form-block">
+      <label for="email" class="form-label">Votre mail*</label>
+      <input
+        class="form-field w-input"
+        maxlength="256"
+        name="email"
+        data-name="Email"
+        type="email"
+        id="email"
+        required
+      />
+    </div>
+    <div class="w-layout-hflex form-block">
+      <label for="message" class="form-label">Votre message*</label>
+      <textarea
+        class="form-field w-input"
+        maxlength="2000"
+        name="message"
+        data-name="Message"
+        id="message"
+        rows="5"
+        required
+      ></textarea>
+    </div>
+    <input
+      type="submit"
+      data-wait="Envoi en cours..."
+      class="button-cat w-button"
+      value="Envoyer"
+    />
+  </form>
+  <div class="form-success w-form-done">
+    <div>Merci, votre message a bien été envoyé !</div>
+  </div>
+  <div class="form-error w-form-fail">
+    <div>Il y a eu une erreur lors de l'envoi, réessayez ultérieurement</div>
+  </div>
+</div>
