@@ -1,6 +1,7 @@
 const ALLOWED_ORIGINS = new Set([
   'https://www.chasseautexas.com',
   'https://chasseautexas.com',
+  'https://chasse-au-texas.webflow.io',
   'http://localhost:3000',
   'https://localhost:3000',
 ])
