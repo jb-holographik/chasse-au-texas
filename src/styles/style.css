@@ -143,6 +143,12 @@ textarea#message {
   field-sizing: content;
 }
 
+/* Nav top row: equal width for Qui sommes nous and Activités. */
+#nav-top-row .button-cat {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* Nav submenu override: force the 5th item full width. */
 #nav-submenu .submenu-list > .submenu-item:nth-child(5) {
   width: 100%;

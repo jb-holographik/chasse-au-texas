@@ -1,13 +1,53 @@
 import { gsap } from 'gsap'
 
-import { isMobileViewport } from '../utils/viewport'
+import { isMobileViewport, MOBILE_MEDIA_QUERY } from '../utils/viewport'
 
 const PATH_SAMPLE_STEP = 2
 const HOVER_DURATION = 0.4
 const DIM_OPACITY = 0.1
 
+let footerNavInstance = null
+let viewportListenerBound = false
+
+function bindViewportFooterListener() {
+  if (viewportListenerBound) return
+
+  window.matchMedia(MOBILE_MEDIA_QUERY).addEventListener('change', () => {
+    if (isMobileViewport()) {
+      destroyFooterNavHover()
+      return
+    }
+
+    initFooterNavHover()
+  })
+
+  viewportListenerBound = true
+}
+
+export function destroyFooterNavHover() {
+  if (!footerNavInstance) return
+
+  const { footer, handlers, links } = footerNavInstance
+
+  footer.removeEventListener('pointerenter', handlers.startTracking)
+  footer.removeEventListener('pointerleave', handlers.stopTracking)
+  footer.removeEventListener('pointermove', handlers.onPointerMove)
+
+  gsap.killTweensOf(links)
+  gsap.set(links, { opacity: 1 })
+  footer.classList.remove('is-nav-hover')
+  delete footer.dataset.footerNavHoverBound
+
+  footerNavInstance = null
+}
+
 export function initFooterNavHover() {
-  if (isMobileViewport()) return
+  bindViewportFooterListener()
+
+  if (isMobileViewport()) {
+    destroyFooterNavHover()
+    return
+  }
 
   const footer = document.querySelector('.footer')
   if (!footer || footer.dataset.footerNavHoverBound === '1') return
@@ -306,12 +346,20 @@ export function initFooterNavHover() {
     playHoverOut()
   }
 
-  footer.addEventListener('pointerenter', startTracking)
-  footer.addEventListener('pointerleave', stopTracking)
-  footer.addEventListener('pointermove', (event) => {
+  function onPointerMove(event) {
     if (!isTracking) return
     applyPointerPosition(event.clientX, event.clientY)
-  })
+  }
+
+  footer.addEventListener('pointerenter', startTracking)
+  footer.addEventListener('pointerleave', stopTracking)
+  footer.addEventListener('pointermove', onPointerMove)
 
   footer.dataset.footerNavHoverBound = '1'
+
+  footerNavInstance = {
+    footer,
+    links,
+    handlers: { startTracking, stopTracking, onPointerMove },
+  }
 }

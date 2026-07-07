@@ -123,6 +123,34 @@ function getPageCategoryHints(nav) {
   return Array.from(hints)
 }
 
+const GENERIC_PATH_TOKENS = new Set([
+  'activites',
+  'activite',
+  'categorie',
+  'category',
+])
+
+function isStaticSubmenuPageLink(button) {
+  const label = getButtonLabel(button)
+  if (label.includes('all inclusive') || label.includes('hors ranch')) {
+    return true
+  }
+
+  return isDirectActivityLink(button)
+}
+
+function isDirectActivityLink(button) {
+  const buttonPath = resolveButtonPath(button)
+  if (!buttonPath) return false
+
+  const comparablePath = normalizeComparable(buttonPath)
+  return (
+    comparablePath.includes('/activites/') &&
+    comparablePath !== '/activites' &&
+    comparablePath !== '/activites/'
+  )
+}
+
 function getButtonTokens(button) {
   const explicitSlug =
     button.getAttribute('data-category-slug') ||
@@ -132,7 +160,11 @@ function getButtonTokens(button) {
   const buttonPath = resolveButtonPath(button) || ''
 
   return Array.from(
-    new Set(splitTokens(`${explicitSlug} ${label} ${buttonPath}`))
+    new Set(
+      splitTokens(`${explicitSlug} ${label} ${buttonPath}`).filter(
+        (token) => !GENERIC_PATH_TOKENS.has(token)
+      )
+    )
   )
 }
 
@@ -167,6 +199,11 @@ function findActiveSubmenuButton(buttons, currentPath, pageCategoryHints = []) {
         bestScore = pathScore
         bestMatch = button
       }
+      return
+    }
+
+    // Static activity links (e.g. all inclusive, hors ranch) only match their exact URL.
+    if (isStaticSubmenuPageLink(button)) {
       return
     }
 
@@ -431,9 +468,17 @@ export function initNavSubmenuToggle() {
   const elements = resolveNavElements()
   if (!elements) return
 
+  const { nav, submenu, activitiesButton } = elements
+
+  if (nav.dataset.navBound === '1') {
+    fixPageLinkHrefs(document)
+    navElements = elements
+    updateNavState()
+    return
+  }
+
   fixPageLinkHrefs(document)
   navElements = elements
-  const { nav, submenu, activitiesButton } = elements
 
   let isSubmenuOpen = false
 
