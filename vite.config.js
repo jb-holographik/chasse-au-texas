@@ -6,18 +6,16 @@ export default defineConfig({
     host: 'localhost',
     port: 3000,
     strictPort: true,
-    https: true,
     cors: '*',
     hmr: {
       host: 'localhost',
-      protocol: 'wss',
+      protocol: 'ws',
     },
   },
   preview: {
     host: 'localhost',
     port: 3000,
     strictPort: true,
-    https: true,
   },
   build: {
     minify: true,

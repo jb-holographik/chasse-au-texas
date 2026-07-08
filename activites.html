@@ -48,7 +48,7 @@
         "description": "",
         "url": "/activites/",
         "category": "",
-        "image": ["", "", ""],
+        "image": ["", "", "", "", "", "", "", "", "", ""],
         "offers": {
           "@type": "Offer",
           "price": "",
@@ -359,6 +359,78 @@
                   class="activite_img w-dyn-bind-empty"
                 />
               </div>
+              <div class="activite_images_img is-second">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://d3e54v103j8qbb.cloudfront.net/plugins/Basic/assets/placeholder.60f9b1840c.svg"
+                  loading="lazy"
+                  alt=""
+                  class="activite_img w-dyn-bind-empty"
+                />
+              </div>
             </div>
           </div>
           <div class="w-layout-vflex activite_content">
@@ -482,8 +554,30 @@
       crossorigin="anonymous"
     ></script>
     <script src="js/webflow.js" type="text/javascript"></script>
-    <script type="module" src="http://localhost:3000/@vite/client"></script>
-    <script type="module" src="http://localhost:3000/src/main.js"></script>
+    <script>
+      ;(function () {
+        var isLocal =
+          location.hostname === 'localhost' || location.hostname === '127.0.0.1'
+
+        if (isLocal) {
+          var client = document.createElement('script')
+          client.type = 'module'
+          client.src = 'http://localhost:3000/@vite/client'
+          document.body.appendChild(client)
+
+          var main = document.createElement('script')
+          main.type = 'module'
+          main.src = 'http://localhost:3000/src/main.js'
+          document.body.appendChild(main)
+          return
+        }
+
+        var bundle = document.createElement('script')
+        bundle.src = 'main.js'
+        bundle.defer = true
+        document.body.appendChild(bundle)
+      })()
+    </script>
     <!-- 
  -->
   </body>
