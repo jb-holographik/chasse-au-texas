@@ -108,7 +108,7 @@ body {
   max-width: 100%;
   margin-inline: auto;
   height: min(52svh, max(280px, calc(100cqw * 10 / 16)));
-  overflow: hidden;
+  overflow: visible;
   box-sizing: border-box;
 }
 
@@ -124,6 +124,7 @@ body {
   display: flex;
   align-items: stretch;
   justify-content: center;
+  width: calc(100% - 2em);
   height: 100%;
   box-sizing: border-box;
 }
@@ -139,7 +140,17 @@ body {
   height: 100%;
   max-width: none;
   transform: none;
+  padding: 0;
+  background-color: transparent;
   box-sizing: border-box;
+}
+
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner.is-swiper
+  .swiper-slide-active
+  .activite_images_img {
+  padding: 0.25em;
+  background-color: var(--_primitives---color--beige--beige, #ecdcc3);
 }
 
 .section_activite:not(.is-category):not(.is-about)
