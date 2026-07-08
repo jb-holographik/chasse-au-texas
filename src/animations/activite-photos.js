@@ -114,6 +114,13 @@ function detachInvalidFrames(inner, validFrames) {
   })
 }
 
+function resetFrameForSwiper(frame) {
+  gsap.set(frame, { clearProps: 'all' })
+  frame.classList.remove('is-second', 'is-front', 'is-back')
+  frame.removeAttribute('style')
+  frame.hidden = false
+}
+
 function whenSlideImagesReady(frames) {
   const pendingImages = frames
     .map((frame) => frame.querySelector('img'))
@@ -138,14 +145,18 @@ function initSwiperMode(inner, frames) {
   detachInvalidFrames(inner, frames)
 
   inner.classList.add('is-swiper', 'swiper')
-  swiperFramesParent = frames[0]?.parentElement || inner
+  swiperFramesParent = inner
 
   const wrapper = document.createElement('div')
   wrapper.className = 'swiper-wrapper'
 
   frames.forEach((frame) => {
-    frame.classList.add('swiper-slide')
-    wrapper.appendChild(frame)
+    resetFrameForSwiper(frame)
+
+    const slide = document.createElement('div')
+    slide.className = 'swiper-slide'
+    slide.appendChild(frame)
+    wrapper.appendChild(slide)
   })
 
   inner.appendChild(wrapper)
@@ -176,17 +187,13 @@ function initSwiperMode(inner, frames) {
       slidesPerView: 1,
       spaceBetween: 0,
       loop: frames.length > 1,
-      grabCursor: true,
-      speed: 500,
       pagination: {
         el: pagination,
         clickable: true,
-        renderBullet: (index, className) =>
-          `<span class="${className}" aria-label="Photo ${index + 1}"></span>`,
       },
       navigation: {
-        prevEl: prev,
         nextEl: next,
+        prevEl: prev,
       },
     })
   })
@@ -230,7 +237,12 @@ export function destroyActivitePhotos() {
   }
 
   if (photoStackRoot) {
-    const frames = getPhotoStackFrames(photoStackRoot)
+    const restoreParent = swiperFramesParent || photoStackRoot
+    const frames = [
+      ...photoStackRoot.querySelectorAll('.activite_images_img'),
+      ...detachedFrames,
+    ]
+
     photoStackRoot.classList.remove('is-stacked', 'is-swiper', 'swiper')
     delete photoStackRoot.dataset.photosReady
 
@@ -240,15 +252,18 @@ export function destroyActivitePhotos() {
       )
       .forEach((node) => node.remove())
 
-    const wrapper = photoStackRoot.querySelector('.swiper-wrapper')
-    if (wrapper) {
-      const restoreParent = swiperFramesParent || photoStackRoot
-      frames.forEach((frame) => {
-        frame.classList.remove('swiper-slide')
+    photoStackRoot.querySelectorAll('.swiper-slide').forEach((slide) => {
+      const frame = slide.querySelector('.activite_images_img')
+      if (frame) {
+        resetFrameForSwiper(frame)
         restoreParent.appendChild(frame)
-      })
-      wrapper.remove()
-    }
+      }
+      slide.remove()
+    })
+
+    const wrapper = photoStackRoot.querySelector('.swiper-wrapper')
+    wrapper?.remove()
+
     swiperFramesParent = null
 
     detachedFrames.forEach((frame) => {
@@ -257,9 +272,7 @@ export function destroyActivitePhotos() {
     detachedFrames = []
 
     frames.forEach((frame) => {
-      gsap.set(frame, { clearProps: 'x,xPercent,y,rotate,zIndex' })
-      frame.classList.remove('is-back', 'is-front', 'swiper-slide')
-      frame.hidden = false
+      resetFrameForSwiper(frame)
     })
 
     photoStackRoot = null

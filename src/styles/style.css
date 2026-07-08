@@ -115,14 +115,23 @@ body {
 .section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper
   .swiper-wrapper {
-  display: flex;
   height: 100%;
-  align-items: stretch;
 }
 
 .section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper
-  .activite_images_img.swiper-slide {
+  .swiper-slide {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner.is-swiper
+  .swiper-slide
+  .activite_images_img {
   position: relative;
   top: auto;
   left: auto;
@@ -130,9 +139,7 @@ body {
   height: 100%;
   max-width: none;
   transform: none;
-  cursor: grab;
   box-sizing: border-box;
-  flex-shrink: 0;
 }
 
 .section_activite:not(.is-category):not(.is-about)
