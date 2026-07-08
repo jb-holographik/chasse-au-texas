@@ -125,7 +125,14 @@ body {
   align-items: stretch;
   justify-content: center;
   height: 100%;
+  cursor: grab;
   box-sizing: border-box;
+}
+
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner.is-swiper.swiper-grabbing
+  .swiper-slide {
+  cursor: grabbing;
 }
 
 .section_activite:not(.is-category):not(.is-about)
@@ -142,6 +149,8 @@ body {
   padding: 0;
   background-color: transparent;
   box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .section_activite:not(.is-category):not(.is-about)
@@ -159,6 +168,16 @@ body {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner.is-swiper
+  .activite_img::selection {
+  background: transparent;
 }
 
 .section_activite:not(.is-category):not(.is-about)
