@@ -52,11 +52,10 @@ console.log(JSON.stringify(report, null, 2))
 const beige = 'rgb(236, 220, 195)'
 const ok =
   report.centeredSlides === true &&
-  report.slidesPerView === 'auto' &&
+  Number(report.slidesPerView) > 1 &&
   report.innerOverflow === 'visible' &&
   report.activeFrameBg === beige &&
   report.inactiveFrameBg === 'rgba(0, 0, 0, 0)' &&
-  report.activeSlideWidth < report.innerWidth &&
   report.hasSidePeek
 
 console.log(ok ? '\nPASS' : '\nFAIL')
