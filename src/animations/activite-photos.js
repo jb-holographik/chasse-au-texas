@@ -13,6 +13,7 @@ let photoStackRoot = null
 let clickHandler = null
 let swiperInstance = null
 let swiperFramesParent = null
+let detachedFrames = []
 
 function getPhotoStackInner(scope = document) {
   const root = scope?.querySelector ? scope : document
@@ -102,25 +103,15 @@ function initStackMode(inner, frames) {
   inner.addEventListener('click', clickHandler)
 }
 
-function getLoopConfig(slideCount) {
-  const slidesPerView = 1
-  const slidesPerGroup = 1
-  const minSlidesForLoop = slidesPerView + slidesPerGroup
+function detachInvalidFrames(inner, validFrames) {
+  detachedFrames = getPhotoStackFrames(inner).filter(
+    (frame) => !validFrames.includes(frame)
+  )
 
-  if (slideCount < minSlidesForLoop) {
-    return { loop: false, loopAdditionalSlides: 0 }
-  }
-
-  // Respect Swiper requirement: slideCount >= slidesPerView + loopedSlides
-  // where loopedSlides = slidesPerGroup + loopAdditionalSlides.
-  const maxAdditionalSlides = slideCount - slidesPerView - slidesPerGroup
-  const loopAdditionalSlides = Math.min(2, Math.max(0, maxAdditionalSlides))
-
-  return {
-    loop: true,
-    loopAdditionalSlides,
-    loopAddBlankSlides: true,
-  }
+  detachedFrames.forEach((frame) => {
+    frame.hidden = true
+    inner.parentElement?.appendChild(frame)
+  })
 }
 
 function whenSlideImagesReady(frames) {
@@ -144,6 +135,8 @@ function whenSlideImagesReady(frames) {
 }
 
 function initSwiperMode(inner, frames) {
+  detachInvalidFrames(inner, frames)
+
   inner.classList.add('is-swiper', 'swiper')
   swiperFramesParent = frames[0]?.parentElement || inner
 
@@ -173,8 +166,6 @@ function initSwiperMode(inner, frames) {
 
   inner.append(prev, next)
 
-  const loopConfig = getLoopConfig(frames.length)
-
   whenSlideImagesReady(frames).then(() => {
     if (photoStackRoot !== inner || inner.dataset.photosReady !== 'true') {
       return
@@ -183,8 +174,8 @@ function initSwiperMode(inner, frames) {
     swiperInstance = new Swiper(inner, {
       modules: [Navigation, Pagination],
       slidesPerView: 1,
-      spaceBetween: 16,
-      ...loopConfig,
+      spaceBetween: 0,
+      loop: frames.length > 1,
       grabCursor: true,
       speed: 500,
       pagination: {
@@ -259,6 +250,11 @@ export function destroyActivitePhotos() {
       wrapper.remove()
     }
     swiperFramesParent = null
+
+    detachedFrames.forEach((frame) => {
+      photoStackRoot?.appendChild(frame)
+    })
+    detachedFrames = []
 
     frames.forEach((frame) => {
       gsap.set(frame, { clearProps: 'x,xPercent,y,rotate,zIndex' })

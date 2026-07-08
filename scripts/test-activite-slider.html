@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="/src/styles/style.css" rel="stylesheet" />
+    <style>
+      body {
+        margin: 0;
+        background: #101010;
+      }
+
+      .section_activite {
+        padding: 2em;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="content" class="page-wrapper">
+      <main class="main-wrapper" data-barba="container">
+        <section class="section_activite">
+          <div class="activite_images">
+            <div class="activite_images-inner">
+              <div class="activite_images_img">
+                <img
+                  src="https://picsum.photos/seed/a/1200/800"
+                  alt=""
+                  class="activite_img"
+                />
+              </div>
+              <div class="activite_images_img is-second">
+                <img
+                  src="https://picsum.photos/seed/b/1200/800"
+                  alt=""
+                  class="activite_img"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://picsum.photos/seed/c/1200/800"
+                  alt=""
+                  class="activite_img"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://picsum.photos/seed/d/1200/800"
+                  alt=""
+                  class="activite_img"
+                />
+              </div>
+              <div class="activite_images_img">
+                <img
+                  src="https://picsum.photos/seed/e/1200/800"
+                  alt=""
+                  class="activite_img"
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script type="module">
+      import { initActivitePhotos } from '/src/animations/activite-photos.js'
+
+      initActivitePhotos()
+    </script>
+  </body>
+</html>
