@@ -102,27 +102,45 @@ function initStackMode(inner, frames) {
   inner.addEventListener('click', clickHandler)
 }
 
-function refreshSwiperLoop(swiper) {
-  if (!swiper || swiper.destroyed || !swiper.params.loop) return
-  swiper.update()
-  swiper.loopFix()
+function getLoopConfig(slideCount) {
+  const slidesPerView = 1
+  const slidesPerGroup = 1
+  const minSlidesForLoop = slidesPerView + slidesPerGroup
+
+  if (slideCount < minSlidesForLoop) {
+    return { loop: false, loopAdditionalSlides: 0 }
+  }
+
+  // Respect Swiper requirement: slideCount >= slidesPerView + loopedSlides
+  // where loopedSlides = slidesPerGroup + loopAdditionalSlides.
+  const maxAdditionalSlides = slideCount - slidesPerView - slidesPerGroup
+  const loopAdditionalSlides = Math.min(2, Math.max(0, maxAdditionalSlides))
+
+  return {
+    loop: true,
+    loopAdditionalSlides,
+    loopAddBlankSlides: true,
+  }
 }
 
-function bindSwiperImageUpdates(swiper, frames) {
-  const refresh = () => refreshSwiperLoop(swiper)
+function whenSlideImagesReady(frames) {
+  const pendingImages = frames
+    .map((frame) => frame.querySelector('img'))
+    .filter((img) => img && !img.complete)
 
-  frames.forEach((frame) => {
-    const img = frame.querySelector('img')
-    if (!img) return
-    if (img.complete) return
-    img.addEventListener('load', refresh, { once: true })
-  })
-
-  if (typeof ResizeObserver !== 'undefined') {
-    const observer = new ResizeObserver(() => refresh())
-    frames.forEach((frame) => observer.observe(frame))
-    swiper.on('destroy', () => observer.disconnect())
+  if (pendingImages.length === 0) {
+    return Promise.resolve()
   }
+
+  return Promise.all(
+    pendingImages.map(
+      (img) =>
+        new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true })
+          img.addEventListener('error', resolve, { once: true })
+        })
+    )
+  )
 }
 
 function initSwiperMode(inner, frames) {
@@ -155,41 +173,32 @@ function initSwiperMode(inner, frames) {
 
   inner.append(prev, next)
 
-  swiperInstance = new Swiper(inner, {
-    modules: [Navigation, Pagination],
-    slidesPerView: 1,
-    centeredSlides: true,
-    spaceBetween: 16,
-    loop: true,
-    loopAdditionalSlides: 1,
-    loopPreventsSliding: false,
-    grabCursor: true,
-    speed: 500,
-    roundLengths: true,
-    observer: true,
-    observeParents: true,
-    observeSlideChildren: true,
-    pagination: {
-      el: pagination,
-      clickable: true,
-      renderBullet: (index, className) =>
-        `<span class="${className}" aria-label="Photo ${index + 1}"></span>`,
-    },
-    navigation: {
-      prevEl: prev,
-      nextEl: next,
-    },
-    on: {
-      init: (swiper) => {
-        requestAnimationFrame(() => refreshSwiperLoop(swiper))
-      },
-      resize: (swiper) => {
-        refreshSwiperLoop(swiper)
-      },
-    },
-  })
+  const loopConfig = getLoopConfig(frames.length)
 
-  bindSwiperImageUpdates(swiperInstance, frames)
+  whenSlideImagesReady(frames).then(() => {
+    if (photoStackRoot !== inner || inner.dataset.photosReady !== 'true') {
+      return
+    }
+
+    swiperInstance = new Swiper(inner, {
+      modules: [Navigation, Pagination],
+      slidesPerView: 1,
+      spaceBetween: 16,
+      ...loopConfig,
+      grabCursor: true,
+      speed: 500,
+      pagination: {
+        el: pagination,
+        clickable: true,
+        renderBullet: (index, className) =>
+          `<span class="${className}" aria-label="Photo ${index + 1}"></span>`,
+      },
+      navigation: {
+        prevEl: prev,
+        nextEl: next,
+      },
+    })
+  })
 }
 
 export function initActivitePhotos(scope = document) {
