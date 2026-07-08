@@ -184,9 +184,11 @@ function initSwiperMode(inner, frames) {
 
     swiperInstance = new Swiper(inner, {
       modules: [Navigation, Pagination],
-      slidesPerView: 1,
+      slidesPerView: 'auto',
+      centeredSlides: true,
       spaceBetween: 0,
       loop: frames.length > 1,
+      loopAdditionalSlides: 2,
       pagination: {
         el: pagination,
         clickable: true,

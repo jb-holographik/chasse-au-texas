@@ -8,60 +8,56 @@ const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
 await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 })
 await page.waitForTimeout(4000)
 
-const report = await page.evaluate(async () => {
+const report = await page.evaluate(() => {
   const inner = document.querySelector('.activite_images-inner')
   const swiper = inner?.swiper
+  const active = inner?.querySelector('.swiper-slide-active')
+  const activeFrame = active?.querySelector('.activite_images_img')
   const slides = [...inner.querySelectorAll('.swiper-slide')]
 
-  const getSlideState = (index) => {
-    const slide = slides[index]
+  const getFrameBg = (slide) => {
     const frame = slide?.querySelector('.activite_images_img')
-    return {
-      slideTransform: slide ? getComputedStyle(slide).transform : null,
-      frameTransform: frame ? getComputedStyle(frame).transform : null,
-      frameClasses: frame?.className || null,
-      slideWidth: slide?.offsetWidth,
-    }
+    return frame ? getComputedStyle(frame).backgroundColor : null
   }
 
-  const snap = () => ({
-    translate: swiper?.translate,
-    realIndex: swiper?.realIndex,
-    active: getSlideState(swiper?.activeIndex ?? 0),
-    next: getSlideState((swiper?.activeIndex ?? 0) + 1),
-  })
+  const activeRect = active?.getBoundingClientRect()
+  const innerRect = inner?.getBoundingClientRect()
 
-  const start = snap()
-  swiper?.slideNext()
-  await new Promise((r) => setTimeout(r, 600))
-  const afterNext = snap()
+  const visibleOutside = slides
+    .filter((slide) => !slide.classList.contains('swiper-slide-active'))
+    .map((slide) => {
+      const rect = slide.getBoundingClientRect()
+      const leftOutside = rect.left < (activeRect?.left ?? 0)
+      const rightOutside = rect.right > (activeRect?.right ?? 0)
+      return { leftOutside, rightOutside, width: rect.width }
+    })
 
   return {
-    innerWidth: inner?.offsetWidth,
+    centeredSlides: swiper?.params?.centeredSlides,
+    slidesPerView: swiper?.params?.slidesPerView,
     innerOverflow: inner ? getComputedStyle(inner).overflow : null,
-    slideCount: slides.length,
-    hasIsSecond: Boolean(inner?.querySelector('.is-second')),
-    framesAreSlides: Boolean(inner?.querySelector('.activite_images_img.swiper-slide')),
-    start,
-    afterNext,
+    activeFrameBg: activeFrame
+      ? getComputedStyle(activeFrame).backgroundColor
+      : null,
+    inactiveFrameBg: getFrameBg(slides.find((s) => !s.classList.contains('swiper-slide-active'))),
+    activeSlideWidth: active?.offsetWidth,
+    innerWidth: inner?.offsetWidth,
+    hasSidePeek: visibleOutside.some((s) => s.leftOutside || s.rightOutside),
+    visibleOutside,
   }
 })
 
 console.log(JSON.stringify(report, null, 2))
 
-const isNeutralTransform = (value) =>
-  value === 'none' || value === 'matrix(1, 0, 0, 1, 0, 0)'
-
+const beige = 'rgb(236, 220, 195)'
 const ok =
-  report.slideCount >= 3 &&
-  !report.hasIsSecond &&
-  !report.framesAreSlides &&
-  report.innerOverflow === 'hidden' &&
-  isNeutralTransform(report.start.active.slideTransform) &&
-  isNeutralTransform(report.start.active.frameTransform) &&
-  isNeutralTransform(report.start.next.frameTransform) &&
-  isNeutralTransform(report.afterNext.active.frameTransform) &&
-  report.start.active.slideWidth === report.innerWidth
+  report.centeredSlides === true &&
+  report.slidesPerView === 'auto' &&
+  report.innerOverflow === 'visible' &&
+  report.activeFrameBg === beige &&
+  report.inactiveFrameBg === 'rgba(0, 0, 0, 0)' &&
+  report.activeSlideWidth < report.innerWidth &&
+  report.hasSidePeek
 
 console.log(ok ? '\nPASS' : '\nFAIL')
 
