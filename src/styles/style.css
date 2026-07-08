@@ -182,31 +182,6 @@ body {
 
 .section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper
-  .activite_images-pagination {
-  position: absolute;
-  bottom: 0.75em;
-  left: 0;
-  right: 0;
-  z-index: 3;
-}
-
-.section_activite:not(.is-category):not(.is-about)
-  .activite_images-inner.is-swiper
-  .swiper-pagination-bullet {
-  width: 0.5em;
-  height: 0.5em;
-  opacity: 0.45;
-  background: var(--_primitives---color--beige--beige, #f5f0e8);
-}
-
-.section_activite:not(.is-category):not(.is-about)
-  .activite_images-inner.is-swiper
-  .swiper-pagination-bullet-active {
-  opacity: 1;
-}
-
-.section_activite:not(.is-category):not(.is-about)
-  .activite_images-inner.is-swiper
   .activite_images-prev,
 .section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper
