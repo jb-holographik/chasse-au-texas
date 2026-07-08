@@ -1,9 +1,8 @@
 import { gsap } from 'gsap'
 import Swiper from 'swiper'
-import { Navigation, Pagination } from 'swiper/modules'
+import { Navigation } from 'swiper/modules'
 import 'swiper/css'
 import 'swiper/css/navigation'
-import 'swiper/css/pagination'
 
 const SLIDER_THRESHOLD = 3
 const PLACEHOLDER_SRC = 'placeholder.60f9b1840c.svg'
@@ -214,10 +213,6 @@ function initSwiperMode(inner, frames) {
 
   inner.appendChild(wrapper)
 
-  const pagination = document.createElement('div')
-  pagination.className = 'activite_images-pagination swiper-pagination'
-  inner.appendChild(pagination)
-
   const prev = document.createElement('button')
   prev.type = 'button'
   prev.className = 'activite_images-prev swiper-button-prev'
@@ -236,20 +231,12 @@ function initSwiperMode(inner, frames) {
     }
 
     swiperInstance = new Swiper(inner, {
-      modules: [Navigation, Pagination],
+      modules: [Navigation],
       slidesPerView: 1.12,
       centeredSlides: true,
       spaceBetween: getEmPx(inner),
       grabCursor: true,
       ...getSwiperLoopConfig(frames.length),
-      pagination: {
-        el: pagination,
-        clickable: true,
-        renderBullet: (index, className) => {
-          if (index >= frames.length) return ''
-          return `<span class="${className}" aria-label="Photo ${index + 1}"></span>`
-        },
-      },
       navigation: {
         nextEl: next,
         prevEl: prev,
@@ -319,7 +306,7 @@ export function destroyActivitePhotos() {
 
     photoStackRoot
       .querySelectorAll(
-        '.activite_images-pagination, .activite_images-prev, .activite_images-next'
+        '.activite_images-prev, .activite_images-next'
       )
       .forEach((node) => node.remove())
 
