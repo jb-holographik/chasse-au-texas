@@ -153,14 +153,17 @@ function reinitWebflow() {
   }
 }
 
-function reinitPageModules() {
+function reinitPageModules(scope = document) {
   fixPageLinkHrefs(document)
   initSmoothScroll()
   syncSmoothScroll()
   updateNavState()
-  initActivitePhotos()
-  initReservationForm()
-  initFooterNavHover()
+  reinitWebflow()
+  return Promise.all([
+    initActivitePhotos(scope),
+    Promise.resolve(initReservationForm()),
+    Promise.resolve(initFooterNavHover()),
+  ])
 }
 
 function destroyPageModules() {
@@ -203,7 +206,6 @@ export function initPageTransitions() {
           })
           window.scrollTo(0, 0)
           gsap.set(data.next.container, { opacity: 0 })
-          initActivitePhotos(data.next.container)
 
           if (data.next.container.querySelector('.section_banners')) {
             prepareBannerStackLayout(data.next.container)
@@ -219,9 +221,9 @@ export function initPageTransitions() {
           await fadeOpacity(data.next.container, 0, 1, ENTER_FADE)
           gsap.set(data.next.container, { clearProps: 'opacity' })
         },
-        after(data) {
+        async after(data) {
           scheduleBackdropRepair(data.next.container)
-          reinitPageModules()
+          await reinitPageModules(data.next.container)
 
           if (data.next.container.querySelector('.section_banners')) {
             finalizeBannerStack()
