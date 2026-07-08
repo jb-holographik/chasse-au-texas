@@ -141,6 +141,51 @@ function whenSlideImagesReady(frames) {
   )
 }
 
+const MIN_LOOP_SLIDES = 8
+
+function createSlide(frame, { clone = false } = {}) {
+  const slide = document.createElement('div')
+  slide.className = 'swiper-slide'
+
+  if (clone) {
+    const frameClone = frame.cloneNode(true)
+    resetFrameForSwiper(frameClone)
+    slide.appendChild(frameClone)
+  } else {
+    resetFrameForSwiper(frame)
+    slide.appendChild(frame)
+  }
+
+  return slide
+}
+
+function addLoopBufferSlides(wrapper, frames) {
+  const needed = Math.max(0, MIN_LOOP_SLIDES - wrapper.children.length)
+  if (needed === 0) return
+
+  const prependCount = Math.ceil(needed / 2)
+  const appendCount = Math.floor(needed / 2)
+
+  for (let i = 0; i < prependCount; i += 1) {
+    const frameIndex = (frames.length - 1 - (i % frames.length) + frames.length) % frames.length
+    wrapper.insertBefore(createSlide(frames[frameIndex], { clone: true }), wrapper.firstChild)
+  }
+
+  for (let i = 0; i < appendCount; i += 1) {
+    const frameIndex = i % frames.length
+    wrapper.appendChild(createSlide(frames[frameIndex], { clone: true }))
+  }
+}
+
+function getSwiperLoopConfig(slideCount) {
+  return {
+    loop: slideCount > 1,
+    loopAdditionalSlides: 2,
+    slidesPerGroup: 1,
+    slidesPerGroupAuto: false,
+  }
+}
+
 function initSwiperMode(inner, frames) {
   detachInvalidFrames(inner, frames)
 
@@ -150,14 +195,13 @@ function initSwiperMode(inner, frames) {
   const wrapper = document.createElement('div')
   wrapper.className = 'swiper-wrapper'
 
-  frames.forEach((frame) => {
-    resetFrameForSwiper(frame)
-
-    const slide = document.createElement('div')
-    slide.className = 'swiper-slide'
-    slide.appendChild(frame)
+  frames.forEach((frame, index) => {
+    const slide = createSlide(frame)
+    slide.dataset.swiperSlideIndex = String(index)
     wrapper.appendChild(slide)
   })
+
+  addLoopBufferSlides(wrapper, frames)
 
   inner.appendChild(wrapper)
 
@@ -177,25 +221,36 @@ function initSwiperMode(inner, frames) {
 
   inner.append(prev, next)
 
-  whenSlideImagesReady(frames).then(() => {
+  whenSlideImagesReady([...wrapper.querySelectorAll('.activite_images_img')]).then(() => {
     if (photoStackRoot !== inner || inner.dataset.photosReady !== 'true') {
       return
     }
 
     swiperInstance = new Swiper(inner, {
       modules: [Navigation, Pagination],
-      slidesPerView: 'auto',
+      slidesPerView: 1.12,
       centeredSlides: true,
       spaceBetween: 0,
-      loop: frames.length > 1,
-      loopAdditionalSlides: 2,
+      ...getSwiperLoopConfig(frames.length),
       pagination: {
         el: pagination,
         clickable: true,
+        renderBullet: (index, className) => {
+          if (index >= frames.length) return ''
+          return `<span class="${className}" aria-label="Photo ${index + 1}"></span>`
+        },
       },
       navigation: {
         nextEl: next,
         prevEl: prev,
+      },
+      on: {
+        init: (swiper) => {
+          swiper.loopFix()
+        },
+        slideChangeTransitionEnd: (swiper) => {
+          swiper.loopFix()
+        },
       },
     })
   })
@@ -256,10 +311,13 @@ export function destroyActivitePhotos() {
 
     photoStackRoot.querySelectorAll('.swiper-slide').forEach((slide) => {
       const frame = slide.querySelector('.activite_images_img')
-      if (frame) {
+      const isOriginalSlide = slide.dataset.swiperSlideIndex !== undefined
+
+      if (frame && isOriginalSlide) {
         resetFrameForSwiper(frame)
         restoreParent.appendChild(frame)
       }
+
       slide.remove()
     })
 
