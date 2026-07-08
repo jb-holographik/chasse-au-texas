@@ -124,7 +124,6 @@ body {
   display: flex;
   align-items: stretch;
   justify-content: center;
-  width: calc(100% - 2em);
   height: 100%;
   box-sizing: border-box;
 }
@@ -230,13 +229,15 @@ body {
 .section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper
   .activite_images-prev {
-  left: 0.75em;
+  left: calc(50% - 50vw + 1em);
+  right: auto;
 }
 
 .section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper
   .activite_images-next {
-  right: 0.75em;
+  right: calc(50% - 50vw + 1em);
+  left: auto;
 }
 
 .section_activite:not(.is-category):not(.is-about)
