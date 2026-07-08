@@ -186,6 +186,10 @@ function getSwiperLoopConfig(slideCount) {
   }
 }
 
+function getEmPx(element) {
+  return parseFloat(getComputedStyle(element).fontSize) || 16
+}
+
 function initSwiperMode(inner, frames) {
   detachInvalidFrames(inner, frames)
 
@@ -230,7 +234,7 @@ function initSwiperMode(inner, frames) {
       modules: [Navigation, Pagination],
       slidesPerView: 1.12,
       centeredSlides: true,
-      spaceBetween: 0,
+      spaceBetween: getEmPx(inner),
       ...getSwiperLoopConfig(frames.length),
       pagination: {
         el: pagination,
@@ -247,6 +251,10 @@ function initSwiperMode(inner, frames) {
       on: {
         init: (swiper) => {
           swiper.loopFix()
+        },
+        resize: (swiper) => {
+          swiper.params.spaceBetween = getEmPx(inner)
+          swiper.update()
         },
         slideChangeTransitionEnd: (swiper) => {
           swiper.loopFix()
