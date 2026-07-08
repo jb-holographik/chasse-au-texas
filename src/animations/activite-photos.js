@@ -7,12 +7,15 @@ import 'swiper/css/navigation'
 const SLIDER_THRESHOLD = 3
 const PLACEHOLDER_SRC = 'placeholder.60f9b1840c.svg'
 const OFFSET_X = ['-1em', '1em']
+const CMS_RETRY_ATTEMPTS = 12
+const CMS_RETRY_DELAY_MS = 50
 
 let photoStackRoot = null
 let clickHandler = null
 let swiperInstance = null
 let swiperFramesParent = null
 let detachedFrames = []
+let initToken = 0
 
 function getPhotoStackInner(scope = document) {
   const root = scope?.querySelector ? scope : document
@@ -49,6 +52,91 @@ function getVisiblePhotoFrames(inner) {
     })
 
   return validFrames
+}
+
+async function getVisiblePhotoFramesWhenReady(inner) {
+  for (let attempt = 0; attempt < CMS_RETRY_ATTEMPTS; attempt += 1) {
+    const frames = getVisiblePhotoFrames(inner)
+    if (frames.length > 0) {
+      return frames
+    }
+
+    await new Promise((resolve) => {
+      window.setTimeout(resolve, CMS_RETRY_DELAY_MS)
+    })
+  }
+
+  return getVisiblePhotoFrames(inner)
+}
+
+function whenVisible(element) {
+  return new Promise((resolve) => {
+    const check = () => {
+      if (!element.isConnected) {
+        resolve()
+        return
+      }
+
+      const { width, height } = element.getBoundingClientRect()
+      const opacity = Number.parseFloat(getComputedStyle(element).opacity) || 1
+
+      if (width > 0 && height > 0 && opacity > 0.01) {
+        resolve()
+        return
+      }
+
+      requestAnimationFrame(check)
+    }
+
+    check()
+  })
+}
+
+function whenSlideImagesReady(frames) {
+  const pendingImages = frames
+    .map((frame) => frame.querySelector('.activite_img, img'))
+    .filter((img) => img && !img.complete)
+
+  if (pendingImages.length === 0) {
+    return Promise.resolve()
+  }
+
+  return Promise.all(
+    pendingImages.map(
+      (img) =>
+        new Promise((resolve) => {
+          const done = () => resolve()
+
+          img.addEventListener('load', done, { once: true })
+          img.addEventListener('error', done, { once: true })
+
+          const check = () => {
+            if (img.complete) {
+              done()
+              return
+            }
+
+            requestAnimationFrame(check)
+          }
+
+          check()
+        })
+    )
+  )
+}
+
+function refreshSwiper(inner) {
+  if (!swiperInstance || swiperInstance.destroyed || photoStackRoot !== inner) {
+    return false
+  }
+
+  swiperInstance.params.spaceBetween = getEmPx(inner)
+  swiperInstance.update()
+  if (swiperInstance.params.loop) {
+    swiperInstance.loopFix()
+  }
+
+  return true
 }
 
 function applyStackLayout(frames, frontIndex) {
@@ -125,26 +213,6 @@ function resetFrameForSwiper(frame) {
   }
 }
 
-function whenSlideImagesReady(frames) {
-  const pendingImages = frames
-    .map((frame) => frame.querySelector('img'))
-    .filter((img) => img && !img.complete)
-
-  if (pendingImages.length === 0) {
-    return Promise.resolve()
-  }
-
-  return Promise.all(
-    pendingImages.map(
-      (img) =>
-        new Promise((resolve) => {
-          img.addEventListener('load', resolve, { once: true })
-          img.addEventListener('error', resolve, { once: true })
-        })
-    )
-  )
-}
-
 const MIN_LOOP_SLIDES = 8
 
 function createSlide(frame, { clone = false } = {}) {
@@ -171,8 +239,12 @@ function addLoopBufferSlides(wrapper, frames) {
   const appendCount = Math.floor(needed / 2)
 
   for (let i = 0; i < prependCount; i += 1) {
-    const frameIndex = (frames.length - 1 - (i % frames.length) + frames.length) % frames.length
-    wrapper.insertBefore(createSlide(frames[frameIndex], { clone: true }), wrapper.firstChild)
+    const frameIndex =
+      (frames.length - 1 - (i % frames.length) + frames.length) % frames.length
+    wrapper.insertBefore(
+      createSlide(frames[frameIndex], { clone: true }),
+      wrapper.firstChild
+    )
   }
 
   for (let i = 0; i < appendCount; i += 1) {
@@ -194,10 +266,10 @@ function getEmPx(element) {
   return parseFloat(getComputedStyle(element).fontSize) || 16
 }
 
-function initSwiperMode(inner, frames) {
+async function initSwiperMode(inner, frames, token) {
   detachInvalidFrames(inner, frames)
 
-  inner.classList.add('is-swiper', 'swiper')
+  inner.classList.add('is-swiper', 'swiper', 'is-swiper-loading')
   swiperFramesParent = inner
 
   const wrapper = document.createElement('div')
@@ -225,65 +297,103 @@ function initSwiperMode(inner, frames) {
 
   inner.append(prev, next)
 
-  whenSlideImagesReady([...wrapper.querySelectorAll('.activite_images_img')]).then(() => {
-    if (photoStackRoot !== inner || inner.dataset.photosReady !== 'true') {
-      return
-    }
+  await whenSlideImagesReady([
+    ...wrapper.querySelectorAll('.activite_images_img'),
+  ])
 
-    swiperInstance = new Swiper(inner, {
-      modules: [Navigation],
-      slidesPerView: 1.12,
-      centeredSlides: true,
-      spaceBetween: getEmPx(inner),
-      grabCursor: true,
-      ...getSwiperLoopConfig(frames.length),
-      navigation: {
-        nextEl: next,
-        prevEl: prev,
+  if (token !== initToken || photoStackRoot !== inner) {
+    return
+  }
+
+  await whenVisible(inner)
+
+  if (token !== initToken || photoStackRoot !== inner) {
+    return
+  }
+
+  swiperInstance = new Swiper(inner, {
+    modules: [Navigation],
+    slidesPerView: 1.12,
+    centeredSlides: true,
+    spaceBetween: getEmPx(inner),
+    grabCursor: true,
+    observer: true,
+    observeParents: true,
+    ...getSwiperLoopConfig(frames.length),
+    navigation: {
+      nextEl: next,
+      prevEl: prev,
+    },
+    on: {
+      init: (swiper) => {
+        swiper.loopFix()
+        inner.classList.remove('is-swiper-loading')
       },
-      on: {
-        init: (swiper) => {
+      resize: (swiper) => {
+        swiper.params.spaceBetween = getEmPx(inner)
+        swiper.update()
+        if (swiper.params.loop) {
           swiper.loopFix()
-        },
-        resize: (swiper) => {
-          swiper.params.spaceBetween = getEmPx(inner)
-          swiper.update()
-        },
-        slideChangeTransitionEnd: (swiper) => {
-          swiper.loopFix()
-        },
+        }
       },
-    })
+      slideChangeTransitionEnd: (swiper) => {
+        swiper.loopFix()
+      },
+    },
+  })
+
+  requestAnimationFrame(() => {
+    if (swiperInstance?.destroyed || photoStackRoot !== inner) return
+    refreshSwiper(inner)
+    inner.classList.remove('is-swiper-loading')
   })
 }
 
-export function initActivitePhotos(scope = document) {
+export async function initActivitePhotos(scope = document) {
   const inner = getPhotoStackInner(scope)
   if (!inner) return
 
-  const frames = getVisiblePhotoFrames(inner)
-  if (frames.length === 0) return
-
-  if (photoStackRoot === inner && inner.dataset.photosReady === 'true') {
+  if (photoStackRoot === inner && refreshSwiper(inner)) {
     return
   }
 
   destroyActivitePhotos()
 
+  const token = ++initToken
+  const frames = await getVisiblePhotoFramesWhenReady(inner)
+
+  if (token !== initToken || !inner.isConnected) {
+    return
+  }
+
+  if (frames.length === 0) {
+    return
+  }
+
   photoStackRoot = inner
   inner.dataset.photosReady = 'true'
 
   if (frames.length >= SLIDER_THRESHOLD) {
-    initSwiperMode(inner, frames)
+    await initSwiperMode(inner, frames, token)
     return
   }
 
-  if (frames.length < 2) return
+  if (frames.length < 2) {
+    return
+  }
+
+  await whenVisible(inner)
+
+  if (token !== initToken || photoStackRoot !== inner) {
+    return
+  }
 
   initStackMode(inner, frames)
 }
 
 export function destroyActivitePhotos() {
+  initToken += 1
+
   if (swiperInstance) {
     swiperInstance.destroy(true, true)
     swiperInstance = null
@@ -301,13 +411,16 @@ export function destroyActivitePhotos() {
       ...detachedFrames,
     ]
 
-    photoStackRoot.classList.remove('is-stacked', 'is-swiper', 'swiper')
+    photoStackRoot.classList.remove(
+      'is-stacked',
+      'is-swiper',
+      'swiper',
+      'is-swiper-loading'
+    )
     delete photoStackRoot.dataset.photosReady
 
     photoStackRoot
-      .querySelectorAll(
-        '.activite_images-prev, .activite_images-next'
-      )
+      .querySelectorAll('.activite_images-prev, .activite_images-next')
       .forEach((node) => node.remove())
 
     photoStackRoot.querySelectorAll('.swiper-slide').forEach((slide) => {

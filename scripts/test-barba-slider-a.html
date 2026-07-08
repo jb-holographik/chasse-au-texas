@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Barba slider test A</title>
+    <link href="/src/styles/style.css" rel="stylesheet" />
+    <style>
+      body {
+        margin: 0;
+        background: #101010;
+        color: #fff;
+        font-family: sans-serif;
+      }
+
+      .section_activite {
+        padding: 2em;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      .nav-link {
+        display: inline-block;
+        margin: 2em;
+        color: #ecdcc3;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="content" class="page-wrapper" data-barba="wrapper">
+      <main class="main-wrapper" data-barba="container" data-barba-namespace="slider-a">
+        <section class="section_activite">
+          <h1>Page A</h1>
+          <p>Pas de slider ici.</p>
+          <a class="nav-link" href="/scripts/test-barba-slider-b.html">Aller au slider</a>
+        </section>
+      </main>
+    </div>
+    <script type="module">
+      import { initPageTransitions } from '/src/animations/page-transition.js'
+
+      initPageTransitions()
+    </script>
+  </body>
+</html>

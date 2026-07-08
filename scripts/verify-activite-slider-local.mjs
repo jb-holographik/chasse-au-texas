@@ -1,6 +1,6 @@
 import { chromium } from 'playwright'
 
-const URL = 'http://127.0.0.1:5173/scripts/test-activite-slider.html'
+const URL = 'http://localhost:3000/scripts/test-activite-slider.html'
 
 const browser = await chromium.launch({ headless: true })
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })

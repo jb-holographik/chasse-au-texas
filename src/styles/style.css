@@ -101,6 +101,11 @@ body {
 }
 
 .section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner.is-swiper.is-swiper-loading {
+  visibility: hidden;
+}
+
+.section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper {
   position: relative;
   display: block;
