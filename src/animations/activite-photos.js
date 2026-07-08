@@ -119,6 +119,11 @@ function resetFrameForSwiper(frame) {
   frame.classList.remove('is-second', 'is-front', 'is-back')
   frame.removeAttribute('style')
   frame.hidden = false
+
+  const img = frame.querySelector('img')
+  if (img) {
+    img.setAttribute('draggable', 'false')
+  }
 }
 
 function whenSlideImagesReady(frames) {
@@ -235,6 +240,7 @@ function initSwiperMode(inner, frames) {
       slidesPerView: 1.12,
       centeredSlides: true,
       spaceBetween: getEmPx(inner),
+      grabCursor: true,
       ...getSwiperLoopConfig(frames.length),
       pagination: {
         el: pagination,
