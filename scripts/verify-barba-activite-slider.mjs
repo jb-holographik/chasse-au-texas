@@ -17,7 +17,7 @@ const afterNav = await page.evaluate(() => {
   const opacity = inner
     ? Number.parseFloat(getComputedStyle(inner).opacity) || 1
     : 0
-  const loading = inner?.classList.contains('is-swiper-loading')
+  const loading = inner?.classList.contains('is-photos-pending')
   const { width, height } = inner?.getBoundingClientRect() ?? {
     width: 0,
     height: 0,

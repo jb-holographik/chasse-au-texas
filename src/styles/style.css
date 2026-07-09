@@ -34,6 +34,24 @@ body {
   container-type: inline-size;
 }
 
+.section_activite:not(.is-category):not(.is-about) .activite_images-inner {
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+  height: min(52svh, max(280px, calc(100cqw * 10 / 16)));
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner:not(.is-swiper):not(.is-stacked):not(.is-single),
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner.is-photos-pending {
+  visibility: hidden;
+}
+
 .section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-stacked {
   position: relative;
@@ -101,20 +119,8 @@ body {
 }
 
 .section_activite:not(.is-category):not(.is-about)
-  .activite_images-inner.is-swiper.is-swiper-loading {
-  visibility: hidden;
-}
-
-.section_activite:not(.is-category):not(.is-about)
   .activite_images-inner.is-swiper {
-  position: relative;
-  display: block;
-  width: 100%;
-  max-width: 100%;
-  margin-inline: auto;
-  height: min(52svh, max(280px, calc(100cqw * 10 / 16)));
   overflow: visible;
-  box-sizing: border-box;
 }
 
 .section_activite:not(.is-category):not(.is-about)

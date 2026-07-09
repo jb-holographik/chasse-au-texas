@@ -1,0 +1,28 @@
+/**
+ * CSS à coller dans Webflow (site publié uniquement) :
+ * Site settings → Custom code → Head code
+ *
+ * Remplace le bloc « stack immédiat » qui affiche les photos avant main.js
+ * et provoque un saut de layout (2 cartes empilées → ligne → slider).
+ *
+ * Ce CSS réserve l'espace et masque le layout Webflow par défaut jusqu'à ce
+ * que main.js applique is-swiper / is-stacked / is-single.
+ */
+
+.section_activite:not(.is-category):not(.is-about) .activite_images-inner {
+  display: block;
+  position: relative;
+  width: 100%;
+  max-width: 100%;
+  margin-inline: auto;
+  height: min(52svh, max(280px, calc(100cqw * 10 / 16)));
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner:not(.is-swiper):not(.is-stacked):not(.is-single),
+.section_activite:not(.is-category):not(.is-about)
+  .activite_images-inner.is-photos-pending {
+  visibility: hidden;
+}

@@ -6,6 +6,7 @@ import {
   initSmoothScroll,
   syncSmoothScroll,
 } from '../utils/scroll'
+import { prepareActivitePhotosLayout } from '../activite-photos-boot.js'
 import { destroyActivitePhotos, initActivitePhotos } from './activite-photos'
 import {
   destroyBannerStack,
@@ -153,6 +154,11 @@ function reinitWebflow() {
   }
 }
 
+function isActivitePhotosInitialized(scope = document) {
+  const inner = scope.querySelector?.('.activite_images-inner')
+  return inner?.dataset.photosReady === 'true'
+}
+
 function reinitPageModules(scope = document) {
   fixPageLinkHrefs(document)
   initSmoothScroll()
@@ -160,7 +166,9 @@ function reinitPageModules(scope = document) {
   updateNavState()
   reinitWebflow()
   return Promise.all([
-    initActivitePhotos(scope),
+    isActivitePhotosInitialized(scope)
+      ? Promise.resolve()
+      : initActivitePhotos(scope),
     Promise.resolve(initReservationForm()),
     Promise.resolve(initFooterNavHover()),
   ])
@@ -210,6 +218,10 @@ export function initPageTransitions() {
           if (data.next.container.querySelector('.section_banners')) {
             prepareBannerStackLayout(data.next.container)
           }
+
+          if (data.next.container.querySelector('.activite_images-inner')) {
+            prepareActivitePhotosLayout(data.next.container)
+          }
         },
         async enter(data) {
           updateDocumentMeta(parseNextDocument(data) || data.next.document)
@@ -217,6 +229,10 @@ export function initPageTransitions() {
           updateNavState()
           reinitWebflow()
           scheduleBackdropRepair(data.next.container)
+
+          if (data.next.container.querySelector('.activite_images-inner')) {
+            await initActivitePhotos(data.next.container)
+          }
 
           await fadeOpacity(data.next.container, 0, 1, ENTER_FADE)
           gsap.set(data.next.container, { clearProps: 'opacity' })

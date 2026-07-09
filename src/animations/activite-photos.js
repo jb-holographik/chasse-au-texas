@@ -1,3 +1,4 @@
+import { prepareActivitePhotosLayout } from '../activite-photos-boot.js'
 import { gsap } from 'gsap'
 import Swiper from 'swiper'
 import { Navigation } from 'swiper/modules'
@@ -350,7 +351,7 @@ async function initSwiperMode(inner, frames, token) {
     on: {
       init: (swiper) => {
         swiper.loopFix()
-        inner.classList.remove('is-swiper-loading')
+        revealActivitePhotos(inner)
       },
       resize: (swiper) => {
         swiper.params.spaceBetween = getEmPx(inner)
@@ -368,19 +369,41 @@ async function initSwiperMode(inner, frames, token) {
   requestAnimationFrame(() => {
     if (swiperInstance?.destroyed || photoStackRoot !== inner) return
     refreshSwiper(inner)
-    inner.classList.remove('is-swiper-loading')
+    revealActivitePhotos(inner)
   })
+}
+
+function revealActivitePhotos(inner) {
+  inner.classList.remove('is-photos-pending', 'is-swiper-loading')
 }
 
 export async function initActivitePhotos(scope = document) {
   const inner = getPhotoStackInner(scope)
   if (!inner) return
 
+  if (inner.dataset.photosReady === 'true') {
+    if (photoStackRoot === inner && refreshSwiper(inner)) {
+      revealActivitePhotos(inner)
+      return
+    }
+
+    if (
+      inner.classList.contains('is-swiper') ||
+      inner.classList.contains('is-stacked') ||
+      inner.classList.contains('is-single')
+    ) {
+      revealActivitePhotos(inner)
+      return
+    }
+  }
+
   if (photoStackRoot === inner && refreshSwiper(inner)) {
+    revealActivitePhotos(inner)
     return
   }
 
   destroyActivitePhotos()
+  prepareActivitePhotosLayout(scope)
 
   const token = ++initToken
   const frames = await getVisiblePhotoFramesWhenReady(inner)
@@ -403,6 +426,7 @@ export async function initActivitePhotos(scope = document) {
 
   if (frames.length < 2) {
     inner.classList.add('is-single')
+    revealActivitePhotos(inner)
     return
   }
 
@@ -413,6 +437,7 @@ export async function initActivitePhotos(scope = document) {
   }
 
   initStackMode(inner, frames)
+  revealActivitePhotos(inner)
 }
 
 export function destroyActivitePhotos() {
@@ -440,7 +465,8 @@ export function destroyActivitePhotos() {
       'is-single',
       'is-swiper',
       'swiper',
-      'is-swiper-loading'
+      'is-swiper-loading',
+      'is-photos-pending'
     )
     delete photoStackRoot.dataset.photosReady
 

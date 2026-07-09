@@ -1,3 +1,4 @@
+import './activite-photos-boot.js'
 import './styles/style.css'
 import { initActivitePhotos } from './animations/activite-photos'
 import { initBannerStack } from './animations/banner-stack'
