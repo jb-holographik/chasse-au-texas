@@ -7,6 +7,7 @@ import 'swiper/css/navigation'
 const SLIDER_THRESHOLD = 3
 const PLACEHOLDER_SRC = 'placeholder.60f9b1840c.svg'
 const OFFSET_X = ['-1em', '1em']
+const STACK_ROTATE = [-1, 1]
 const CMS_RETRY_ATTEMPTS = 12
 const CMS_RETRY_DELAY_MS = 50
 const IMAGE_READY_TIMEOUT_MS = 4000
@@ -166,7 +167,7 @@ function applyStackLayout(frames, frontIndex) {
     gsap.set(frame, {
       xPercent: -50,
       x: OFFSET_X[index % OFFSET_X.length],
-      rotate: 0,
+      rotate: STACK_ROTATE[index % STACK_ROTATE.length],
       zIndex: isFront ? 2 : 1,
     })
     frame.classList.toggle('is-back', !isFront)
@@ -183,7 +184,7 @@ function bringToFront(frames, targetIndex) {
   frames.forEach((frame, index) => {
     const isTarget = index === targetIndex
     gsap.to(frame, {
-      rotate: 0,
+      rotate: STACK_ROTATE[index % STACK_ROTATE.length],
       y: 0,
       zIndex: isTarget ? 2 : 1,
       duration: 0.45,
@@ -401,6 +402,7 @@ export async function initActivitePhotos(scope = document) {
   }
 
   if (frames.length < 2) {
+    inner.classList.add('is-single')
     return
   }
 
@@ -435,6 +437,7 @@ export function destroyActivitePhotos() {
 
     photoStackRoot.classList.remove(
       'is-stacked',
+      'is-single',
       'is-swiper',
       'swiper',
       'is-swiper-loading'

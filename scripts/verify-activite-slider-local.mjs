@@ -39,7 +39,9 @@ const report = await page.evaluate(() => {
     activeFrameBg: activeFrame
       ? getComputedStyle(activeFrame).backgroundColor
       : null,
-    inactiveFrameBg: getFrameBg(slides.find((s) => !s.classList.contains('swiper-slide-active'))),
+    inactiveFrameBg: slides
+      .filter((s) => !s.classList.contains('swiper-slide-active'))
+      .map((slide) => getFrameBg(slide)),
     activeSlideWidth: active?.offsetWidth,
     innerWidth: inner?.offsetWidth,
     hasSidePeek: visibleOutside.some((s) => s.leftOutside || s.rightOutside),
@@ -55,7 +57,8 @@ const ok =
   Number(report.slidesPerView) > 1 &&
   report.innerOverflow === 'visible' &&
   report.activeFrameBg === beige &&
-  report.inactiveFrameBg === 'rgba(0, 0, 0, 0)' &&
+  report.inactiveFrameBg.length > 0 &&
+  report.inactiveFrameBg.every((bg) => bg === beige) &&
   report.hasSidePeek
 
 console.log(ok ? '\nPASS' : '\nFAIL')
