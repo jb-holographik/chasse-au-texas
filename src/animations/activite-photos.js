@@ -9,6 +9,7 @@ const PLACEHOLDER_SRC = 'placeholder.60f9b1840c.svg'
 const OFFSET_X = ['-1em', '1em']
 const CMS_RETRY_ATTEMPTS = 12
 const CMS_RETRY_DELAY_MS = 50
+const IMAGE_READY_TIMEOUT_MS = 4000
 
 let photoStackRoot = null
 let clickHandler = null
@@ -92,37 +93,57 @@ function whenVisible(element) {
   })
 }
 
+function isImageReady(img) {
+  return Boolean(img?.complete || img?.naturalWidth > 0)
+}
+
+function whenImageReady(img) {
+  if (!img || isImageReady(img)) {
+    return Promise.resolve()
+  }
+
+  return new Promise((resolve) => {
+    let settled = false
+    const done = () => {
+      if (settled) return
+      settled = true
+      window.clearTimeout(timeoutId)
+      resolve()
+    }
+
+    const timeoutId = window.setTimeout(done, IMAGE_READY_TIMEOUT_MS)
+
+    img.addEventListener('load', done, { once: true })
+    img.addEventListener('error', done, { once: true })
+
+    const check = () => {
+      if (!img.isConnected) {
+        done()
+        return
+      }
+
+      if (isImageReady(img)) {
+        done()
+        return
+      }
+
+      requestAnimationFrame(check)
+    }
+
+    check()
+  })
+}
+
 function whenSlideImagesReady(frames) {
   const pendingImages = frames
     .map((frame) => frame.querySelector('.activite_img, img'))
-    .filter((img) => img && !img.complete)
+    .filter((img) => img && !isImageReady(img))
 
   if (pendingImages.length === 0) {
     return Promise.resolve()
   }
 
-  return Promise.all(
-    pendingImages.map(
-      (img) =>
-        new Promise((resolve) => {
-          const done = () => resolve()
-
-          img.addEventListener('load', done, { once: true })
-          img.addEventListener('error', done, { once: true })
-
-          const check = () => {
-            if (img.complete) {
-              done()
-              return
-            }
-
-            requestAnimationFrame(check)
-          }
-
-          check()
-        })
-    )
-  )
+  return Promise.all(pendingImages.map((img) => whenImageReady(img)))
 }
 
 function refreshSwiper(inner) {
@@ -210,6 +231,7 @@ function resetFrameForSwiper(frame) {
   const img = frame.querySelector('img')
   if (img) {
     img.setAttribute('draggable', 'false')
+    img.loading = 'eager'
   }
 }
 
