@@ -2,6 +2,9 @@
   "mcpServers": {
     "swiper": {
       "url": "https://swiperjs.com/mcp"
+    },
+    "webflow": {
+      "url": "https://mcp.webflow.com/mcp"
     }
   }
 }
