@@ -77,6 +77,18 @@
         </section>
       </main>
     </div>
+    <script>
+      const requestedCount = Number(
+        new URLSearchParams(window.location.search).get('count')
+      )
+      const frames = document.querySelectorAll('.activite_images_img')
+
+      if (requestedCount > 0) {
+        Array.from(frames)
+          .slice(requestedCount)
+          .forEach((frame) => frame.remove())
+      }
+    </script>
     <script type="module">
       import { initActivitePhotos } from '/src/animations/activite-photos.js'
 

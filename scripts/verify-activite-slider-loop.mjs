@@ -1,99 +1,61 @@
 import { chromium } from 'playwright'
 
-const URL = 'http://localhost:3000/scripts/test-activite-slider.html'
-
 const browser = await chromium.launch({ headless: true })
-const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+const reports = []
 
-await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 })
-await page.waitForTimeout(4000)
+for (const requestedCount of [3, 4, 5, 6, 7]) {
+  const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+  const loopWarnings = []
+  page.on('console', (message) => {
+    if (message.text().includes('Swiper Loop Warning')) {
+      loopWarnings.push(message.text())
+    }
+  })
 
-const report = await page.evaluate(async () => {
-  const inner = document.querySelector('.activite_images-inner')
-  const swiper = inner?.swiper
-  if (!swiper) return { error: 'no swiper' }
-
-  const cmsCount = Number(inner.dataset.photoCount) || inner.querySelectorAll(
-    '.swiper-slide[data-swiper-slide-index]'
-  ).length
-
-  const getSlideSrc = (slide) =>
-    slide?.querySelector('img')?.getAttribute('src') || ''
-
-  const lastOriginalSrc = getSlideSrc(
-    inner.querySelector(
-      `.swiper-slide[data-swiper-slide-index="${cmsCount - 1}"]`
-    )
+  await page.goto(
+    `http://localhost:3000/scripts/test-activite-slider.html?count=${requestedCount}`,
+    { waitUntil: 'networkidle', timeout: 60000 }
   )
+  await page.waitForTimeout(4000)
 
-  const innerRect = inner.getBoundingClientRect()
-  const visibleSides = () => {
-    const active = inner.querySelector('.swiper-slide-active')
-    const activeRect = active?.getBoundingClientRect()
-    let hasLeft = false
-    let hasRight = false
-    let duplicateLastBesideActive = false
+  const report = await page.evaluate(async () => {
+    const inner = document.querySelector('.activite_images-inner')
+    const swiper = inner?.swiper
+    if (!swiper) return { error: 'no swiper' }
 
-    inner.querySelectorAll('.swiper-slide').forEach((slide) => {
-      if (slide === active) return
-      const rect = slide.getBoundingClientRect()
-      const visible = rect.right > innerRect.left && rect.left < innerRect.right
-      if (!visible) return
+    const cmsCount = Number(inner.dataset.photoCount)
+    const slideCount = inner.querySelectorAll('.swiper-slide').length
+    const frameCount = inner.querySelectorAll('.activite_images_img').length
 
-      const besideActive =
-        rect.right <= (activeRect?.left ?? 0) + 4 ||
-        rect.left >= (activeRect?.right ?? 0) - 4
+    swiper.slideToLoop(cmsCount - 1, 0)
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    swiper.slideNext(0)
+    await new Promise((resolve) => setTimeout(resolve, 100))
 
-      if (
-        besideActive &&
-        getSlideSrc(slide) === lastOriginalSrc &&
-        getSlideSrc(active) === lastOriginalSrc
-      ) {
-        duplicateLastBesideActive = true
-      }
+    return {
+      cmsCount,
+      slideCount,
+      frameCount,
+      loop: swiper.params.loop,
+      slidesPerView: swiper.params.slidesPerView,
+      realIndexAfterLast: swiper.realIndex,
+    }
+  })
 
-      if (rect.right <= (activeRect?.left ?? 0) + 4) hasLeft = true
-      if (rect.left >= (activeRect?.right ?? 0) - 4) hasRight = true
-    })
+  reports.push({ requestedCount, loopWarnings, ...report })
+  await page.close()
+}
 
-    return { hasLeft, hasRight, duplicateLastBesideActive, activeRect }
-  }
+console.log(JSON.stringify(reports, null, 2))
 
-  swiper.slideToLoop(cmsCount - 1, 0)
-  await new Promise((r) => setTimeout(r, 400))
-  swiper.loopFix()
-  await new Promise((r) => setTimeout(r, 100))
-
-  const atLast = {
-    realIndex: swiper.realIndex,
-    isEnd: swiper.isEnd,
-    isBeginning: swiper.isBeginning,
-    slidesPerView: swiper.params.slidesPerView,
-    loopAdditionalSlides: swiper.params.loopAdditionalSlides,
-    slidesPerViewDynamic: swiper.slidesPerViewDynamic(),
-    ...visibleSides(),
-  }
-
-  swiper.slideNext()
-  await new Promise((r) => setTimeout(r, 600))
-
-  const afterNext = {
-    realIndex: swiper.realIndex,
-    isEnd: swiper.isEnd,
-    ...visibleSides(),
-  }
-
-  return { cmsCount, atLast, afterNext }
-})
-
-console.log(JSON.stringify(report, null, 2))
-
-const ok =
-  report.atLast?.hasRight === true &&
-  report.atLast?.isEnd === false &&
-  report.atLast?.duplicateLastBesideActive === false &&
-  (report.afterNext?.realIndex === 0 ||
-    report.afterNext?.realIndex === report.cmsCount)
+const ok = reports.every(
+  (report) =>
+    report.loopWarnings.length === 0 &&
+    report.slideCount === report.cmsCount &&
+    report.frameCount === report.cmsCount &&
+    report.loop === true &&
+    report.realIndexAfterLast === 0
+)
 
 console.log(ok ? '\nPASS' : '\nFAIL')
 
