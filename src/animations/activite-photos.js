@@ -51,26 +51,17 @@ function isValidPhotoFrame(frame) {
 
 function getVisiblePhotoFrames(inner) {
   const frames = getPhotoStackFrames(inner)
-  const seenSrc = new Set()
-  const validFrames = []
 
   frames.forEach((frame) => {
     frame.hidden = false
-
-    if (!isValidPhotoFrame(frame)) {
-      frame.hidden = true
-      return
-    }
-
-    const src = getImageSrc(frame)
-    if (seenSrc.has(src)) {
-      frame.hidden = true
-      return
-    }
-
-    seenSrc.add(src)
-    validFrames.push(frame)
   })
+
+  const validFrames = frames.filter(isValidPhotoFrame)
+  frames
+    .filter((frame) => !validFrames.includes(frame))
+    .forEach((frame) => {
+      frame.hidden = true
+    })
 
   return validFrames
 }
