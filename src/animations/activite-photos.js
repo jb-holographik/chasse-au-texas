@@ -32,30 +32,45 @@ function getPhotoStackFrames(inner) {
   return gsap.utils.toArray('.activite_images_img', inner)
 }
 
-function isValidPhotoFrame(frame) {
-  const img = frame.querySelector('.activite_img, img')
-  if (!img) return false
+function getImageSrc(frame) {
+  const img = frame?.querySelector('.activite_img, img')
+  if (!img) return ''
 
-  const src = (img.getAttribute('src') || img.currentSrc || '').trim()
+  return (img.getAttribute('src') || img.currentSrc || '').trim()
+}
+
+function isValidPhotoFrame(frame) {
+  const src = getImageSrc(frame)
   if (!src || src.includes(PLACEHOLDER_SRC)) return false
-  if (img.classList.contains('w-dyn-bind-empty')) return false
+
+  const img = frame.querySelector('.activite_img, img')
+  if (img?.classList.contains('w-dyn-bind-empty')) return false
 
   return true
 }
 
 function getVisiblePhotoFrames(inner) {
   const frames = getPhotoStackFrames(inner)
+  const seenSrc = new Set()
+  const validFrames = []
 
   frames.forEach((frame) => {
     frame.hidden = false
-  })
 
-  const validFrames = frames.filter(isValidPhotoFrame)
-  frames
-    .filter((frame) => !validFrames.includes(frame))
-    .forEach((frame) => {
+    if (!isValidPhotoFrame(frame)) {
       frame.hidden = true
-    })
+      return
+    }
+
+    const src = getImageSrc(frame)
+    if (seenSrc.has(src)) {
+      frame.hidden = true
+      return
+    }
+
+    seenSrc.add(src)
+    validFrames.push(frame)
+  })
 
   return validFrames
 }
