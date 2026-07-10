@@ -164,9 +164,6 @@ function refreshSwiper(inner) {
 
   swiperInstance.params.spaceBetween = getEmPx(inner)
   swiperInstance.update()
-  if (swiperInstance.params.loop) {
-    swiperInstance.loopFix()
-  }
 
   return true
 }
@@ -214,50 +211,20 @@ function resetFrameForSwiper(frame) {
   }
 }
 
-const MIN_LOOP_SLIDES = 8
-
-function createSlide(frame, { clone = false } = {}) {
+function createSlide(frame) {
   const slide = document.createElement('div')
   slide.className = 'swiper-slide'
 
-  if (clone) {
-    const frameClone = frame.cloneNode(true)
-    resetFrameForSwiper(frameClone)
-    slide.appendChild(frameClone)
-  } else {
-    resetFrameForSwiper(frame)
-    slide.appendChild(frame)
-  }
+  resetFrameForSwiper(frame)
+  slide.appendChild(frame)
 
   return slide
 }
 
-function addLoopBufferSlides(wrapper, frames) {
-  const needed = Math.max(0, MIN_LOOP_SLIDES - wrapper.children.length)
-  if (needed === 0) return
-
-  const prependCount = Math.ceil(needed / 2)
-  const appendCount = Math.floor(needed / 2)
-
-  for (let i = 0; i < prependCount; i += 1) {
-    const frameIndex =
-      (frames.length - 1 - (i % frames.length) + frames.length) % frames.length
-    wrapper.insertBefore(
-      createSlide(frames[frameIndex], { clone: true }),
-      wrapper.firstChild
-    )
-  }
-
-  for (let i = 0; i < appendCount; i += 1) {
-    const frameIndex = i % frames.length
-    wrapper.appendChild(createSlide(frames[frameIndex], { clone: true }))
-  }
-}
-
-function getSwiperLoopConfig(slideCount) {
+function getSwiperNavigationConfig(slideCount) {
   return {
-    loop: slideCount > 1,
-    loopAdditionalSlides: 2,
+    loop: false,
+    rewind: slideCount > 1,
     slidesPerGroup: 1,
     slidesPerGroupAuto: false,
   }
@@ -281,8 +248,6 @@ async function initSwiperMode(inner, frames, token) {
     slide.dataset.swiperSlideIndex = String(index)
     wrapper.appendChild(slide)
   })
-
-  addLoopBufferSlides(wrapper, frames)
 
   inner.appendChild(wrapper)
 
@@ -320,25 +285,18 @@ async function initSwiperMode(inner, frames, token) {
     grabCursor: true,
     observer: true,
     observeParents: true,
-    ...getSwiperLoopConfig(frames.length),
+    ...getSwiperNavigationConfig(frames.length),
     navigation: {
       nextEl: next,
       prevEl: prev,
     },
     on: {
-      init: (swiper) => {
-        swiper.loopFix()
+      init: () => {
         revealActivitePhotos(inner)
       },
       resize: (swiper) => {
         swiper.params.spaceBetween = getEmPx(inner)
         swiper.update()
-        if (swiper.params.loop) {
-          swiper.loopFix()
-        }
-      },
-      slideChangeTransitionEnd: (swiper) => {
-        swiper.loopFix()
       },
     },
   })

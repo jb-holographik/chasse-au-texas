@@ -36,17 +36,15 @@ const report = await page.evaluate(async () => {
     return { hasLeft, hasRight, activeRect }
   }
 
-  swiper.slideToLoop(originalCount - 1, 0)
+  swiper.slideTo(originalCount - 1, 0)
   await new Promise((r) => setTimeout(r, 400))
-  swiper.loopFix()
-  await new Promise((r) => setTimeout(r, 100))
 
   const atLast = {
     realIndex: swiper.realIndex,
     isEnd: swiper.isEnd,
     isBeginning: swiper.isBeginning,
     slidesPerView: swiper.params.slidesPerView,
-    loopAdditionalSlides: swiper.params.loopAdditionalSlides,
+    rewind: swiper.params.rewind,
     slidesPerViewDynamic: swiper.slidesPerViewDynamic(),
     ...visibleSides(),
   }
@@ -66,9 +64,7 @@ const report = await page.evaluate(async () => {
 console.log(JSON.stringify(report, null, 2))
 
 const ok =
-  report.atLast?.hasRight === true &&
-  report.atLast?.isEnd === false &&
-  report.afterNext?.realIndex === 0
+  report.atLast?.isEnd === true && report.afterNext?.realIndex === 0
 
 console.log(ok ? '\nPASS' : '\nFAIL')
 
