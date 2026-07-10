@@ -7,6 +7,9 @@ import { isMobileViewport, MOBILE_MEDIA_QUERY } from './viewport'
 let lenisInstance = null
 let tickerCallback = null
 let viewportListenerBound = false
+let lockedScrollY = 0
+
+const BODY_SCROLL_LOCK_CLASS = 'is-activite-scroll-locked'
 
 function bindViewportScrollListener() {
   if (viewportListenerBound) {
@@ -81,6 +84,7 @@ export function syncSmoothScroll() {
 
 export function setScrollLocked(locked) {
   const root = document.documentElement
+  const body = document.body
 
   if (locked) {
     if (lenisInstance) {
@@ -88,7 +92,10 @@ export function setScrollLocked(locked) {
       return
     }
 
+    lockedScrollY = window.scrollY || root.scrollTop || 0
     root.classList.add('is-activite-lightbox-open')
+    body.classList.add(BODY_SCROLL_LOCK_CLASS)
+    body.style.top = `-${lockedScrollY}px`
     return
   }
 
@@ -97,5 +104,10 @@ export function setScrollLocked(locked) {
   if (lenisInstance) {
     lenisInstance.start()
     syncSmoothScroll()
+    return
   }
+
+  body.classList.remove(BODY_SCROLL_LOCK_CLASS)
+  body.style.top = ''
+  window.scrollTo(0, lockedScrollY)
 }

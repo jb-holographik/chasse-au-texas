@@ -268,8 +268,15 @@ body {
   cursor: grabbing;
 }
 
-html.is-activite-lightbox-open,
-html.is-activite-lightbox-open body {
+html.is-activite-lightbox-open {
+  overscroll-behavior: none;
+}
+
+body.is-activite-scroll-locked {
+  position: fixed;
+  left: 0;
+  right: 0;
+  width: 100%;
   overflow: hidden;
   overscroll-behavior: none;
 }

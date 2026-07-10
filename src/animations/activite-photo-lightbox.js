@@ -1,4 +1,5 @@
 import { setScrollLocked } from '../utils/scroll'
+import { isMobileViewport } from '../utils/viewport'
 
 const LIGHTBOX_ID = 'activite-photo-lightbox'
 const PLACEHOLDER_SRC = 'placeholder.60f9b1840c.svg'
@@ -107,7 +108,10 @@ function openLightbox(frame) {
   lightboxRoot.classList.add('is-open')
   document.addEventListener('keydown', keydownHandler)
   lockPageScroll()
-  lightboxCloseButton.focus({ preventScroll: true })
+
+  if (!isMobileViewport()) {
+    lightboxCloseButton.focus({ preventScroll: true })
+  }
 }
 
 export function closeActivitePhotoLightbox() {
@@ -120,6 +124,11 @@ export function closeActivitePhotoLightbox() {
   if (keydownHandler) {
     document.removeEventListener('keydown', keydownHandler)
   }
+
+  if (document.activeElement === lightboxCloseButton) {
+    lightboxCloseButton.blur()
+  }
+
   unlockPageScroll()
 }
 
