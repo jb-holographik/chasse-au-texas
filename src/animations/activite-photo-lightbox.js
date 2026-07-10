@@ -1,3 +1,5 @@
+import { setScrollLocked } from '../utils/scroll'
+
 const LIGHTBOX_ID = 'activite-photo-lightbox'
 const PLACEHOLDER_SRC = 'placeholder.60f9b1840c.svg'
 const CLICK_MOVE_THRESHOLD_PX = 8
@@ -83,11 +85,11 @@ function ensureLightbox() {
 }
 
 function lockPageScroll() {
-  document.documentElement.classList.add('is-activite-lightbox-open')
+  setScrollLocked(true)
 }
 
 function unlockPageScroll() {
-  document.documentElement.classList.remove('is-activite-lightbox-open')
+  setScrollLocked(false)
 }
 
 function openLightbox(frame) {

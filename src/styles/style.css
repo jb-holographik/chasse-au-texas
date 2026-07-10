@@ -271,6 +271,7 @@ body {
 html.is-activite-lightbox-open,
 html.is-activite-lightbox-open body {
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .activite-photo-lightbox {

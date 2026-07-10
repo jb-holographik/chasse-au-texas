@@ -78,3 +78,24 @@ export function syncSmoothScroll() {
 
   ScrollTrigger.refresh()
 }
+
+export function setScrollLocked(locked) {
+  const root = document.documentElement
+
+  if (locked) {
+    if (lenisInstance) {
+      lenisInstance.stop()
+      return
+    }
+
+    root.classList.add('is-activite-lightbox-open')
+    return
+  }
+
+  root.classList.remove('is-activite-lightbox-open')
+
+  if (lenisInstance) {
+    lenisInstance.start()
+    syncSmoothScroll()
+  }
+}
