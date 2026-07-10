@@ -165,16 +165,23 @@ function handlePointerUp(event) {
   if (!targetFrame || targetFrame !== frame) return
 
   event.preventDefault()
-  compatibilityClickHandler = (clickEvent) => {
+  if (compatibilityClickHandler) {
     document.removeEventListener('click', compatibilityClickHandler, true)
-    compatibilityClickHandler = null
+  }
+
+  const handler = (clickEvent) => {
+    document.removeEventListener('click', handler, true)
+    if (compatibilityClickHandler === handler) {
+      compatibilityClickHandler = null
+    }
 
     if (clickEvent.target?.closest?.('.activite-photo-lightbox__backdrop')) {
       clickEvent.preventDefault()
       clickEvent.stopImmediatePropagation()
     }
   }
-  document.addEventListener('click', compatibilityClickHandler, true)
+  compatibilityClickHandler = handler
+  document.addEventListener('click', handler, true)
   openLightbox(frame)
 }
 
