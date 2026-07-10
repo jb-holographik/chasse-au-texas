@@ -90,9 +90,17 @@
       }
     </script>
     <script type="module">
-      import { initActivitePhotos } from '/src/animations/activite-photos.js'
+      import {
+        destroyActivitePhotos,
+        initActivitePhotos,
+      } from '/src/animations/activite-photos.js'
 
-      initActivitePhotos()
+      window.activitePhotosTestApi = {
+        destroy: destroyActivitePhotos,
+        init: initActivitePhotos,
+      }
+
+      await initActivitePhotos()
     </script>
   </body>
 </html>

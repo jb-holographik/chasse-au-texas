@@ -427,9 +427,8 @@ export function destroyActivitePhotos() {
 
     photoStackRoot.querySelectorAll('.swiper-slide').forEach((slide) => {
       const frame = slide.querySelector('.activite_images_img')
-      const isOriginalSlide = slide.dataset.swiperSlideIndex !== undefined
 
-      if (frame && isOriginalSlide) {
+      if (frame) {
         resetFrameForSwiper(frame)
         restoreParent.appendChild(frame)
       }

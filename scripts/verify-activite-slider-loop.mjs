@@ -32,13 +32,30 @@ for (const requestedCount of [3, 4, 5, 6, 7]) {
     swiper.slideNext(0)
     await new Promise((resolve) => setTimeout(resolve, 100))
 
-    return {
+    const beforeDestroy = {
       cmsCount,
       slideCount,
       frameCount,
       loop: swiper.params.loop,
       slidesPerView: swiper.params.slidesPerView,
       realIndexAfterLast: swiper.realIndex,
+    }
+
+    window.activitePhotosTestApi.destroy()
+    const frameCountAfterDestroy = inner.querySelectorAll(
+      '.activite_images_img'
+    ).length
+
+    await window.activitePhotosTestApi.init()
+    const frameCountAfterReinit = inner.querySelectorAll(
+      '.activite_images_img'
+    ).length
+
+    return {
+      ...beforeDestroy,
+      frameCountAfterDestroy,
+      frameCountAfterReinit,
+      loopAfterReinit: inner.swiper?.params.loop,
     }
   })
 
@@ -51,9 +68,14 @@ console.log(JSON.stringify(reports, null, 2))
 const ok = reports.every(
   (report) =>
     report.loopWarnings.length === 0 &&
+    report.cmsCount === report.requestedCount &&
     report.slideCount === report.cmsCount &&
     report.frameCount === report.cmsCount &&
     report.loop === true &&
+    report.slidesPerView === (report.cmsCount >= 5 ? 1.12 : 1) &&
+    report.frameCountAfterDestroy === report.cmsCount &&
+    report.frameCountAfterReinit === report.cmsCount &&
+    report.loopAfterReinit === true &&
     report.realIndexAfterLast === 0
 )
 
