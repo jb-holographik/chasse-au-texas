@@ -49,49 +49,26 @@ function isValidPhotoFrame(frame) {
   return true
 }
 
-function getImagePathname(src) {
-  if (!src) return ''
-
-  const trimmed = src.trim()
-  if (!trimmed) return ''
-
-  try {
-    return new URL(trimmed, window.location.origin).pathname
-  } catch {
-    return trimmed.split('?')[0]
-  }
-}
-
-function getCoverImagePathname(section) {
-  const bgImg = section?.querySelector('.background_img')
-  if (!bgImg) return ''
-
-  const src = (bgImg.currentSrc || bgImg.getAttribute('src') || '').trim()
-  if (!src || src.includes(PLACEHOLDER_SRC)) return ''
-
-  return getImagePathname(src)
-}
-
-function isCoverPhotoFrame(frame, section) {
-  const coverPathname = getCoverImagePathname(section)
-  if (!coverPathname) return false
-
-  return getImagePathname(getImageSrc(frame)) === coverPathname
-}
-
 function getVisiblePhotoFrames(inner) {
   const frames = getPhotoStackFrames(inner)
-  const section = inner.closest('.section_activite')
+  const seenSrc = new Set()
   const validFrames = []
 
   frames.forEach((frame) => {
     frame.hidden = false
 
-    if (!isValidPhotoFrame(frame) || isCoverPhotoFrame(frame, section)) {
+    if (!isValidPhotoFrame(frame)) {
       frame.hidden = true
       return
     }
 
+    const src = getImageSrc(frame)
+    if (seenSrc.has(src)) {
+      frame.hidden = true
+      return
+    }
+
+    seenSrc.add(src)
     validFrames.push(frame)
   })
 
@@ -99,24 +76,7 @@ function getVisiblePhotoFrames(inner) {
 }
 
 async function getVisiblePhotoFramesWhenReady(inner) {
-  const section = inner.closest('.section_activite')
-
   for (let attempt = 0; attempt < CMS_RETRY_ATTEMPTS; attempt += 1) {
-    const bgImg = section?.querySelector('.background_img')
-    const bgSrc = (bgImg?.currentSrc || bgImg?.getAttribute('src') || '').trim()
-    const coverPending =
-      bgImg &&
-      (!bgSrc ||
-        bgSrc.includes(PLACEHOLDER_SRC) ||
-        bgImg.classList.contains('w-dyn-bind-empty'))
-
-    if (coverPending) {
-      await new Promise((resolve) => {
-        window.setTimeout(resolve, CMS_RETRY_DELAY_MS)
-      })
-      continue
-    }
-
     const frames = getVisiblePhotoFrames(inner)
     if (frames.length > 0) {
       return frames
