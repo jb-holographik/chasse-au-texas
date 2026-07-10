@@ -164,6 +164,9 @@ function refreshSwiper(inner) {
 
   swiperInstance.params.spaceBetween = getEmPx(inner)
   swiperInstance.update()
+  if (swiperInstance.params.loop) {
+    swiperInstance.loopFix()
+  }
 
   return true
 }
@@ -211,20 +214,57 @@ function resetFrameForSwiper(frame) {
   }
 }
 
-function createSlide(frame) {
+const MIN_LOOP_SLIDES = 8
+
+function createSlide(frame, { clone = false } = {}) {
   const slide = document.createElement('div')
   slide.className = 'swiper-slide'
 
-  resetFrameForSwiper(frame)
-  slide.appendChild(frame)
+  if (clone) {
+    const frameClone = frame.cloneNode(true)
+    resetFrameForSwiper(frameClone)
+    slide.appendChild(frameClone)
+  } else {
+    resetFrameForSwiper(frame)
+    slide.appendChild(frame)
+  }
 
   return slide
 }
 
-function getSwiperNavigationConfig(slideCount) {
+function addLoopBufferSlides(wrapper, frames) {
+  const needed = Math.max(0, MIN_LOOP_SLIDES - wrapper.children.length)
+  if (needed === 0) return
+
+  // With exactly one buffer slide (7 CMS images), prepending a clone of the
+  // last photo places a duplicate beside the final slide in peek view.
+  if (needed === 1) {
+    wrapper.appendChild(createSlide(frames[0], { clone: true }))
+    return
+  }
+
+  const prependCount = Math.ceil(needed / 2)
+  const appendCount = Math.floor(needed / 2)
+
+  for (let i = 0; i < prependCount; i += 1) {
+    const frameIndex =
+      (frames.length - 1 - (i % frames.length) + frames.length) % frames.length
+    wrapper.insertBefore(
+      createSlide(frames[frameIndex], { clone: true }),
+      wrapper.firstChild
+    )
+  }
+
+  for (let i = 0; i < appendCount; i += 1) {
+    const frameIndex = i % frames.length
+    wrapper.appendChild(createSlide(frames[frameIndex], { clone: true }))
+  }
+}
+
+function getSwiperLoopConfig(slideCount) {
   return {
-    loop: false,
-    rewind: slideCount > 1,
+    loop: slideCount > 1,
+    loopAdditionalSlides: 2,
     slidesPerGroup: 1,
     slidesPerGroupAuto: false,
   }
@@ -248,6 +288,8 @@ async function initSwiperMode(inner, frames, token) {
     slide.dataset.swiperSlideIndex = String(index)
     wrapper.appendChild(slide)
   })
+
+  addLoopBufferSlides(wrapper, frames)
 
   inner.appendChild(wrapper)
 
@@ -285,18 +327,25 @@ async function initSwiperMode(inner, frames, token) {
     grabCursor: true,
     observer: true,
     observeParents: true,
-    ...getSwiperNavigationConfig(frames.length),
+    ...getSwiperLoopConfig(frames.length),
     navigation: {
       nextEl: next,
       prevEl: prev,
     },
     on: {
-      init: () => {
+      init: (swiper) => {
+        swiper.loopFix()
         revealActivitePhotos(inner)
       },
       resize: (swiper) => {
         swiper.params.spaceBetween = getEmPx(inner)
         swiper.update()
+        if (swiper.params.loop) {
+          swiper.loopFix()
+        }
+      },
+      slideChangeTransitionEnd: (swiper) => {
+        swiper.loopFix()
       },
     },
   })
@@ -356,6 +405,7 @@ export async function initActivitePhotos(scope = document) {
 
   photoStackRoot = inner
   inner.dataset.photosReady = 'true'
+  inner.dataset.photoCount = String(frames.length)
 
   if (frames.length >= SLIDER_THRESHOLD) {
     await initSwiperMode(inner, frames, token)
@@ -406,6 +456,7 @@ export function destroyActivitePhotos() {
       'is-photos-pending'
     )
     delete photoStackRoot.dataset.photosReady
+    delete photoStackRoot.dataset.photoCount
 
     photoStackRoot
       .querySelectorAll('.activite_images-prev, .activite_images-next')
