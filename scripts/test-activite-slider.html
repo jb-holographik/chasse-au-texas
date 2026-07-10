@@ -77,10 +77,30 @@
         </section>
       </main>
     </div>
-    <script type="module">
-      import { initActivitePhotos } from '/src/animations/activite-photos.js'
+    <script>
+      const requestedCount = Number(
+        new URLSearchParams(window.location.search).get('count')
+      )
+      const frames = document.querySelectorAll('.activite_images_img')
 
-      initActivitePhotos()
+      if (requestedCount > 0) {
+        Array.from(frames)
+          .slice(requestedCount)
+          .forEach((frame) => frame.remove())
+      }
+    </script>
+    <script type="module">
+      import {
+        destroyActivitePhotos,
+        initActivitePhotos,
+      } from '/src/animations/activite-photos.js'
+
+      window.activitePhotosTestApi = {
+        destroy: destroyActivitePhotos,
+        init: initActivitePhotos,
+      }
+
+      await initActivitePhotos()
     </script>
   </body>
 </html>
