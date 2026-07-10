@@ -1,4 +1,8 @@
 import { prepareActivitePhotosLayout } from '../activite-photos-boot.js'
+import {
+  bindActivitePhotoLightbox,
+  unbindActivitePhotoLightbox,
+} from './activite-photo-lightbox'
 import { gsap } from 'gsap'
 import Swiper from 'swiper'
 import { Navigation } from 'swiper/modules'
@@ -14,7 +18,6 @@ const CMS_RETRY_DELAY_MS = 50
 const IMAGE_READY_TIMEOUT_MS = 4000
 
 let photoStackRoot = null
-let clickHandler = null
 let swiperInstance = null
 let swiperFramesParent = null
 let detachedFrames = []
@@ -176,41 +179,9 @@ function applyStackLayout(frames, frontIndex) {
   })
 }
 
-function bringToFront(frames, targetIndex) {
-  const frontIndex = frames.findIndex((frame) =>
-    frame.classList.contains('is-front')
-  )
-  if (frontIndex === targetIndex) return
-
-  frames.forEach((frame, index) => {
-    const isTarget = index === targetIndex
-    gsap.to(frame, {
-      rotate: STACK_ROTATE[index % STACK_ROTATE.length],
-      y: 0,
-      zIndex: isTarget ? 2 : 1,
-      duration: 0.45,
-      ease: 'power2.out',
-      onStart: () => {
-        frame.classList.toggle('is-back', !isTarget)
-        frame.classList.toggle('is-front', isTarget)
-      },
-    })
-  })
-}
-
 function initStackMode(inner, frames) {
   inner.classList.add('is-stacked')
   applyStackLayout(frames, 0)
-
-  clickHandler = (event) => {
-    const frame = event.target.closest('.activite_images_img.is-back')
-    if (!frame || !inner.contains(frame)) return
-    const targetIndex = frames.indexOf(frame)
-    if (targetIndex === -1) return
-    bringToFront(frames, targetIndex)
-  }
-
-  inner.addEventListener('click', clickHandler)
 }
 
 function detachInvalidFrames(inner, validFrames) {
@@ -384,6 +355,7 @@ export async function initActivitePhotos(scope = document) {
   if (inner.dataset.photosReady === 'true') {
     if (photoStackRoot === inner && refreshSwiper(inner)) {
       revealActivitePhotos(inner)
+      bindActivitePhotoLightbox(inner)
       return
     }
 
@@ -393,12 +365,14 @@ export async function initActivitePhotos(scope = document) {
       inner.classList.contains('is-single')
     ) {
       revealActivitePhotos(inner)
+      bindActivitePhotoLightbox(inner)
       return
     }
   }
 
   if (photoStackRoot === inner && refreshSwiper(inner)) {
     revealActivitePhotos(inner)
+    bindActivitePhotoLightbox(inner)
     return
   }
 
@@ -421,12 +395,14 @@ export async function initActivitePhotos(scope = document) {
 
   if (frames.length >= SLIDER_THRESHOLD) {
     await initSwiperMode(inner, frames, token)
+    bindActivitePhotoLightbox(inner)
     return
   }
 
   if (frames.length < 2) {
     inner.classList.add('is-single')
     revealActivitePhotos(inner)
+    bindActivitePhotoLightbox(inner)
     return
   }
 
@@ -438,19 +414,16 @@ export async function initActivitePhotos(scope = document) {
 
   initStackMode(inner, frames)
   revealActivitePhotos(inner)
+  bindActivitePhotoLightbox(inner)
 }
 
 export function destroyActivitePhotos() {
   initToken += 1
+  unbindActivitePhotoLightbox()
 
   if (swiperInstance) {
     swiperInstance.destroy(true, true)
     swiperInstance = null
-  }
-
-  if (photoStackRoot && clickHandler) {
-    photoStackRoot.removeEventListener('click', clickHandler)
-    clickHandler = null
   }
 
   if (photoStackRoot) {
