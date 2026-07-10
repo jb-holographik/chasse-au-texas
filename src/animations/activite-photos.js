@@ -225,9 +225,10 @@ function getSwiperLoopConfig(slideCount) {
   return {
     loop: slideCount > 1,
     // Swiper 14 needs five slides for a centered 1.12-slide loop. With three
-    // or four CMS photos, keep one centered slide so loop mode remains valid
-    // without cloning content.
+    // or four CMS photos, use one slide per view. Exactly three centered
+    // slides jump during drag, so keep that visually identical case uncentered.
     slidesPerView: slideCount >= 5 ? 1.12 : 1,
+    centeredSlides: slideCount > 3,
     slidesPerGroup: 1,
     slidesPerGroupAuto: false,
   }
@@ -282,7 +283,6 @@ async function initSwiperMode(inner, frames, token) {
 
   swiperInstance = new Swiper(inner, {
     modules: [Navigation],
-    centeredSlides: true,
     spaceBetween: getEmPx(inner),
     grabCursor: true,
     observer: true,

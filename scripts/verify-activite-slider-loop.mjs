@@ -3,7 +3,7 @@ import { chromium } from 'playwright'
 const browser = await chromium.launch({ headless: true })
 const reports = []
 
-for (const requestedCount of [3, 4, 5, 6, 7]) {
+for (const requestedCount of [3, 4, 5, 6, 7, 8, 9]) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
   const loopWarnings = []
   page.on('console', (message) => {
@@ -52,6 +52,7 @@ for (const requestedCount of [3, 4, 5, 6, 7]) {
       frameCount,
       loop: swiper.params.loop,
       slidesPerView: swiper.params.slidesPerView,
+      centeredSlides: swiper.params.centeredSlides,
       realIndexAfterLast,
       loopFixCallsForNext,
       realIndexAfterPrevious: swiper.realIndex,
@@ -76,6 +77,45 @@ for (const requestedCount of [3, 4, 5, 6, 7]) {
     }
   })
 
+  if (requestedCount <= 4) {
+    const slider = page.locator('.activite_images-inner')
+    await slider.scrollIntoViewIfNeeded()
+    const box = await slider.boundingBox()
+    const initialSlideIndex = await page.evaluate(
+      () =>
+        document.querySelector('.swiper-slide-active')?.dataset.swiperSlideIndex
+    )
+    const slidePositions = []
+
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+    await page.mouse.down()
+    for (const distance of [12, 24, 36, 48]) {
+      await page.mouse.move(
+        box.x + box.width / 2 - distance,
+        box.y + box.height / 2
+      )
+      await page.waitForTimeout(10)
+      slidePositions.push(
+        await page.evaluate((slideIndex) => {
+          const swiper = document.querySelector('.activite_images-inner')?.swiper
+          const slide = [...(swiper?.slides || [])].find(
+            (item) => item.dataset.swiperSlideIndex === slideIndex
+          )
+          return slide?.getBoundingClientRect().left ?? null
+        }, initialSlideIndex)
+      )
+    }
+    await page.mouse.up()
+
+    report.dragPositions = slidePositions
+    report.dragStaysNearby = slidePositions.every(
+      (left) =>
+        left !== null &&
+        left > -box.width &&
+        left < page.viewportSize().width + box.width
+    )
+  }
+
   reports.push({ requestedCount, loopWarnings, ...report })
   await page.close()
 }
@@ -90,9 +130,11 @@ const ok = reports.every(
     report.frameCount === report.cmsCount &&
     report.loop === true &&
     report.slidesPerView === (report.cmsCount >= 5 ? 1.12 : 1) &&
+    report.centeredSlides === (report.cmsCount > 3) &&
     report.frameCountAfterDestroy === report.cmsCount &&
     report.frameCountAfterReinit === report.cmsCount &&
     report.loopAfterReinit === true &&
+    (report.cmsCount > 4 || report.dragStaysNearby === true) &&
     report.realIndexAfterLast === 0 &&
     report.loopFixCallsForNext === 1 &&
     report.realIndexAfterPrevious === report.cmsCount - 1 &&
