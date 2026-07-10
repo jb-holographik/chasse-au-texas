@@ -13,9 +13,18 @@ const report = await page.evaluate(async () => {
   const swiper = inner?.swiper
   if (!swiper) return { error: 'no swiper' }
 
-  const originalCount = inner.querySelectorAll(
+  const cmsCount = Number(inner.dataset.photoCount) || inner.querySelectorAll(
     '.swiper-slide[data-swiper-slide-index]'
   ).length
+
+  const getSlideSrc = (slide) =>
+    slide?.querySelector('img')?.getAttribute('src') || ''
+
+  const lastOriginalSrc = getSlideSrc(
+    inner.querySelector(
+      `.swiper-slide[data-swiper-slide-index="${cmsCount - 1}"]`
+    )
+  )
 
   const innerRect = inner.getBoundingClientRect()
   const visibleSides = () => {
@@ -23,28 +32,44 @@ const report = await page.evaluate(async () => {
     const activeRect = active?.getBoundingClientRect()
     let hasLeft = false
     let hasRight = false
+    let duplicateLastBesideActive = false
 
     inner.querySelectorAll('.swiper-slide').forEach((slide) => {
       if (slide === active) return
       const rect = slide.getBoundingClientRect()
       const visible = rect.right > innerRect.left && rect.left < innerRect.right
       if (!visible) return
+
+      const besideActive =
+        rect.right <= (activeRect?.left ?? 0) + 4 ||
+        rect.left >= (activeRect?.right ?? 0) - 4
+
+      if (
+        besideActive &&
+        getSlideSrc(slide) === lastOriginalSrc &&
+        getSlideSrc(active) === lastOriginalSrc
+      ) {
+        duplicateLastBesideActive = true
+      }
+
       if (rect.right <= (activeRect?.left ?? 0) + 4) hasLeft = true
       if (rect.left >= (activeRect?.right ?? 0) - 4) hasRight = true
     })
 
-    return { hasLeft, hasRight, activeRect }
+    return { hasLeft, hasRight, duplicateLastBesideActive, activeRect }
   }
 
-  swiper.slideTo(originalCount - 1, 0)
+  swiper.slideToLoop(cmsCount - 1, 0)
   await new Promise((r) => setTimeout(r, 400))
+  swiper.loopFix()
+  await new Promise((r) => setTimeout(r, 100))
 
   const atLast = {
     realIndex: swiper.realIndex,
     isEnd: swiper.isEnd,
     isBeginning: swiper.isBeginning,
     slidesPerView: swiper.params.slidesPerView,
-    rewind: swiper.params.rewind,
+    loopAdditionalSlides: swiper.params.loopAdditionalSlides,
     slidesPerViewDynamic: swiper.slidesPerViewDynamic(),
     ...visibleSides(),
   }
@@ -58,13 +83,17 @@ const report = await page.evaluate(async () => {
     ...visibleSides(),
   }
 
-  return { atLast, afterNext }
+  return { cmsCount, atLast, afterNext }
 })
 
 console.log(JSON.stringify(report, null, 2))
 
 const ok =
-  report.atLast?.isEnd === true && report.afterNext?.realIndex === 0
+  report.atLast?.hasRight === true &&
+  report.atLast?.isEnd === false &&
+  report.atLast?.duplicateLastBesideActive === false &&
+  (report.afterNext?.realIndex === 0 ||
+    report.afterNext?.realIndex === report.cmsCount)
 
 console.log(ok ? '\nPASS' : '\nFAIL')
 
