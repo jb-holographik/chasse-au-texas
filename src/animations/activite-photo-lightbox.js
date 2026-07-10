@@ -15,6 +15,7 @@ let pointerDownHandler = null
 let pointerUpHandler = null
 let closeHandler = null
 let backdropHandler = null
+let compatibilityClickHandler = null
 
 function getPhotoImage(frame) {
   return frame?.querySelector('.activite_img, img') ?? null
@@ -164,6 +165,16 @@ function handlePointerUp(event) {
   if (!targetFrame || targetFrame !== frame) return
 
   event.preventDefault()
+  compatibilityClickHandler = (clickEvent) => {
+    document.removeEventListener('click', compatibilityClickHandler, true)
+    compatibilityClickHandler = null
+
+    if (clickEvent.target?.closest?.('.activite-photo-lightbox__backdrop')) {
+      clickEvent.preventDefault()
+      clickEvent.stopImmediatePropagation()
+    }
+  }
+  document.addEventListener('click', compatibilityClickHandler, true)
   openLightbox(frame)
 }
 
@@ -184,6 +195,11 @@ export function bindActivitePhotoLightbox(inner) {
 
 export function unbindActivitePhotoLightbox() {
   closeActivitePhotoLightbox()
+
+  if (compatibilityClickHandler) {
+    document.removeEventListener('click', compatibilityClickHandler, true)
+    compatibilityClickHandler = null
+  }
 
   if (boundInner && pointerDownHandler) {
     boundInner.removeEventListener('pointerdown', pointerDownHandler)
