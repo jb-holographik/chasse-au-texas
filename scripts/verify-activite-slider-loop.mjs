@@ -29,6 +29,14 @@ for (const requestedCount of [3, 4, 5, 6, 7]) {
 
     swiper.slideToLoop(cmsCount - 1, 0)
     await new Promise((resolve) => setTimeout(resolve, 100))
+
+    const originalLoopFix = swiper.loopFix.bind(swiper)
+    let loopFixCallsForNext = 0
+    swiper.loopFix = (...args) => {
+      loopFixCallsForNext += 1
+      return originalLoopFix(...args)
+    }
+
     swiper.slideNext(0)
     await new Promise((resolve) => setTimeout(resolve, 100))
 
@@ -39,6 +47,7 @@ for (const requestedCount of [3, 4, 5, 6, 7]) {
       loop: swiper.params.loop,
       slidesPerView: swiper.params.slidesPerView,
       realIndexAfterLast: swiper.realIndex,
+      loopFixCallsForNext,
     }
 
     window.activitePhotosTestApi.destroy()
@@ -76,7 +85,8 @@ const ok = reports.every(
     report.frameCountAfterDestroy === report.cmsCount &&
     report.frameCountAfterReinit === report.cmsCount &&
     report.loopAfterReinit === true &&
-    report.realIndexAfterLast === 0
+    report.realIndexAfterLast === 0 &&
+    report.loopFixCallsForNext === 1
 )
 
 console.log(ok ? '\nPASS' : '\nFAIL')
