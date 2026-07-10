@@ -164,9 +164,6 @@ function refreshSwiper(inner) {
 
   swiperInstance.params.spaceBetween = getEmPx(inner)
   swiperInstance.update()
-  if (swiperInstance.params.loop) {
-    swiperInstance.loopFix()
-  }
 
   return true
 }
@@ -296,19 +293,12 @@ async function initSwiperMode(inner, frames, token) {
       prevEl: prev,
     },
     on: {
-      init: (swiper) => {
-        swiper.loopFix()
+      init: () => {
         revealActivitePhotos(inner)
       },
       resize: (swiper) => {
         swiper.params.spaceBetween = getEmPx(inner)
         swiper.update()
-        if (swiper.params.loop) {
-          swiper.loopFix()
-        }
-      },
-      slideChangeTransitionEnd: (swiper) => {
-        swiper.loopFix()
       },
     },
   })
