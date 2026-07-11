@@ -3,6 +3,47 @@ import { chromium } from 'playwright'
 const browser = await chromium.launch({ headless: true })
 const reports = []
 
+async function measureActiveDrag(page) {
+  const slider = page.locator('.activite_images-inner')
+  await slider.scrollIntoViewIfNeeded()
+  const box = await slider.boundingBox()
+  const positions = []
+
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  await page.mouse.down()
+  for (const distance of [12, 24, 36, 48]) {
+    await page.mouse.move(
+      box.x + box.width / 2 - distance,
+      box.y + box.height / 2
+    )
+    await page.waitForTimeout(10)
+    positions.push(
+      await page.evaluate(() => {
+        const active = document.querySelector('.swiper-slide-active')
+        const rect = active?.getBoundingClientRect()
+        return rect
+          ? {
+              index: active.dataset.swiperSlideIndex,
+              left: rect.left,
+              right: rect.right,
+            }
+          : null
+      })
+    )
+  }
+  await page.mouse.up()
+
+  return {
+    positions,
+    staysNearby: positions.every(
+      (position) =>
+        position !== null &&
+        position.right > 0 &&
+        position.left < page.viewportSize().width
+    ),
+  }
+}
+
 for (const requestedCount of [3, 4, 5, 6, 7, 8, 9]) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
   const loopWarnings = []
@@ -78,49 +119,31 @@ for (const requestedCount of [3, 4, 5, 6, 7, 8, 9]) {
   })
 
   if (requestedCount <= 4) {
-    const slider = page.locator('.activite_images-inner')
-    await slider.scrollIntoViewIfNeeded()
-    const box = await slider.boundingBox()
-    const initialSlideIndex = await page.evaluate(
-      () =>
-        document.querySelector('.swiper-slide-active')?.dataset.swiperSlideIndex
-    )
-    const slidePositions = []
-
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-    await page.mouse.down()
-    for (const distance of [12, 24, 36, 48]) {
-      await page.mouse.move(
-        box.x + box.width / 2 - distance,
-        box.y + box.height / 2
-      )
-      await page.waitForTimeout(10)
-      slidePositions.push(
-        await page.evaluate((slideIndex) => {
-          const swiper = document.querySelector('.activite_images-inner')?.swiper
-          const slide = [...(swiper?.slides || [])].find(
-            (item) => item.dataset.swiperSlideIndex === slideIndex
-          )
-          return slide?.getBoundingClientRect().left ?? null
-        }, initialSlideIndex)
-      )
-    }
-    await page.mouse.up()
-
-    report.dragPositions = slidePositions
-    report.dragStaysNearby = slidePositions.every(
-      (left) =>
-        left !== null &&
-        left > -box.width &&
-        left < page.viewportSize().width + box.width
-    )
+    const drag = await measureActiveDrag(page)
+    report.dragPositions = drag.positions
+    report.dragStaysNearby = drag.staysNearby
   }
 
   reports.push({ requestedCount, loopWarnings, ...report })
   await page.close()
 }
 
-console.log(JSON.stringify(reports, null, 2))
+const mobileDragReports = []
+for (const requestedCount of [3, 4]) {
+  const page = await browser.newPage({ viewport: { width: 375, height: 812 } })
+  await page.goto(
+    `http://localhost:3000/scripts/test-activite-slider.html?count=${requestedCount}`,
+    { waitUntil: 'networkidle', timeout: 60000 }
+  )
+  await page.waitForTimeout(4000)
+  mobileDragReports.push({
+    requestedCount,
+    ...(await measureActiveDrag(page)),
+  })
+  await page.close()
+}
+
+console.log(JSON.stringify({ reports, mobileDragReports }, null, 2))
 
 const ok = reports.every(
   (report) =>
@@ -130,7 +153,7 @@ const ok = reports.every(
     report.frameCount === report.cmsCount &&
     report.loop === true &&
     report.slidesPerView === (report.cmsCount >= 5 ? 1.12 : 1) &&
-    report.centeredSlides === (report.cmsCount > 3) &&
+    report.centeredSlides === (report.cmsCount >= 5) &&
     report.frameCountAfterDestroy === report.cmsCount &&
     report.frameCountAfterReinit === report.cmsCount &&
     report.loopAfterReinit === true &&
@@ -139,7 +162,7 @@ const ok = reports.every(
     report.loopFixCallsForNext === 1 &&
     report.realIndexAfterPrevious === report.cmsCount - 1 &&
     report.loopFixCallsForPrevious === 1
-)
+) && mobileDragReports.every((report) => report.staysNearby)
 
 console.log(ok ? '\nPASS' : '\nFAIL')
 
